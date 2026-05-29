@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🧩 旅行拼图 · 一起计划旅行吧！</title>
-    <!-- 字体：霞鹜文楷 -->
     <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -76,36 +75,31 @@
     </style>
 </head>
 <body>
-
 <div class="toast" id="toast"></div>
-
 <header class="app-header">
     <div style="font-size:1.3em; font-weight:700; color:var(--accent);">🧩 旅行拼图</div>
     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-        <span id="roomCodeDisplay" style="background:#fefaf5; padding:5px 10px; border-radius:14px; font-weight:600; font-family:monospace; cursor:pointer;" onclick="window.copyShareCode()">—</span>
-        <button class="btn btn-sm" onclick="window.showCreateModal()">✨ 创建</button>
-        <button class="btn btn-sm" onclick="window.showJoinModal()">🔗 加入</button>
-        <button class="btn btn-sm" onclick="window.exportRoom()">📤 导出</button>
+        <span id="roomCodeDisplay" style="background:#fefaf5; padding:5px 10px; border-radius:14px; font-weight:600; font-family:monospace; cursor:pointer;" onclick="copyShareCode()">—</span>
+        <button class="btn btn-sm" onclick="showCreateModal()">✨ 创建</button>
+        <button class="btn btn-sm" onclick="showJoinModal()">🔗 加入</button>
+        <button class="btn btn-sm" onclick="exportRoom()">📤 导出</button>
         <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">📥 导入</button>
-        <button class="btn btn-sm" onclick="window.finishTrip()">✅ 存档</button>
-        <button class="btn btn-sm" onclick="window.showArchiveModal()">📦 档案馆</button>
+        <button class="btn btn-sm" onclick="finishTrip()">✅ 存档</button>
+        <button class="btn btn-sm" onclick="showArchiveModal()">📦 档案馆</button>
         <span id="destinationLabel" style="font-size:0.9em;"></span>
         <span id="countdownBadge" style="background:#fff0e8; padding:4px 8px; border-radius:10px; display:none;"></span>
         <span id="weatherBadge" style="background:#f0f4f8; padding:4px 8px; border-radius:10px; display:none;"></span>
     </div>
 </header>
-
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="window.importRoom(event)">
-
-<div class="main-container" id="mainContainer">
-    <!-- 左栏：内容收集 -->
-    <div class="panel" id="panelLeft">
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importRoom(event)">
+<div class="main-container">
+    <div class="panel">
         <div class="panel-header">📝 内容收集</div>
         <div class="panel-body">
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
                 <span>👤</span><strong id="currentUserLabel">我</strong>
-                <button class="btn btn-sm" onclick="window.switchUser()">切换</button>
-                <button class="btn btn-sm" onclick="window.addMember()">+成员</button>
+                <button class="btn btn-sm" onclick="switchUser()">切换</button>
+                <button class="btn btn-sm" onclick="addMember()">+成员</button>
             </div>
             <input type="text" id="userName" placeholder="你的名字" value="小明" style="margin-bottom:4px;">
             <input type="text" id="userCity" placeholder="出发城市" value="北京" style="margin-bottom:4px;">
@@ -113,61 +107,54 @@
                 <option>小红书</option><option>抖音</option><option>微博</option><option>大众点评</option>
             </select>
             <textarea id="contentText" placeholder="粘贴攻略文字..." rows="4"></textarea>
-            <button class="btn btn-primary" onclick="window.submitContent()" style="width:100%; margin-top:6px;">🤖 AI提取地点</button>
+            <button class="btn btn-primary" onclick="submitContent()" style="width:100%; margin-top:6px;">🤖 AI提取地点</button>
             <div id="extractStatus" style="font-size:0.8em; margin-top:4px;"></div>
             <div id="contentsList" style="margin-top:8px;"></div>
         </div>
     </div>
-
-    <!-- 中栏：地点聚合 -->
-    <div class="panel" id="panelMid">
+    <div class="panel">
         <div class="panel-header">📍 地点聚合</div>
         <div class="panel-body">
             <div style="display:flex; gap:4px; margin-bottom:8px;">
-                <button class="btn btn-sm filter-btn active" onclick="window.setFilter('all')">全部</button>
-                <button class="btn btn-sm filter-btn" onclick="window.setFilter('restaurant')">🍽️</button>
-                <button class="btn btn-sm filter-btn" onclick="window.setFilter('attraction')">🏛️</button>
-                <button class="btn btn-sm filter-btn" onclick="window.setFilter('accommodation')">🏨</button>
+                <button class="btn btn-sm filter-btn active" onclick="setFilter('all')">全部</button>
+                <button class="btn btn-sm filter-btn" onclick="setFilter('restaurant')">🍽️</button>
+                <button class="btn btn-sm filter-btn" onclick="setFilter('attraction')">🏛️</button>
+                <button class="btn btn-sm filter-btn" onclick="setFilter('accommodation')">🏨</button>
             </div>
             <div id="highFreqSection" style="display:none;"><strong>🔥 高频推荐</strong><div id="highFreqList"></div></div>
             <div><strong>📋 全部地点</strong><div id="allPlacesList"></div></div>
         </div>
     </div>
-
-    <!-- 右栏：行程计划 -->
-    <div class="panel" id="panelRight">
+    <div class="panel">
         <div class="panel-header">🗓️ 行程 & 后记</div>
         <div class="panel-body">
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px;">
                 <label style="font-size:0.8em;">出发日期</label>
-                <input type="date" id="startDate" onchange="window.updateCountdown()" style="width:auto;">
+                <input type="date" id="startDate" onchange="updateCountdown()" style="width:auto;">
                 <label style="font-size:0.8em;">天数</label>
-                <select id="daysSelect" onchange="window.updateCountdown()" style="width:auto;">
+                <select id="daysSelect" onchange="updateCountdown()" style="width:auto;">
                     <option value="2">2</option><option value="3">3</option><option value="4">4</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="window.generateItinerary()" style="width:100%;">✨ 生成行程</button>
-            <button class="btn btn-sm" onclick="window.showDestModal()" style="width:100%;">🎯 目的地推荐</button>
-            <button class="btn btn-sm" onclick="window.showTransportModal()" style="width:100%;">🚄 交通查询</button>
+            <button class="btn btn-primary" onclick="generateItinerary()" style="width:100%;">✨ 生成行程</button>
+            <button class="btn btn-sm" onclick="showDestModal()" style="width:100%;">🎯 目的地推荐</button>
+            <button class="btn btn-sm" onclick="showTransportModal()" style="width:100%;">🚄 交通查询</button>
             <div id="itineraryDisplay" style="margin-top:8px;"></div>
         </div>
     </div>
 </div>
-
-<!-- 移动端导航（可选） -->
 <div style="display:flex; gap:4px; padding:6px; justify-content:center; background:var(--surface); border-top:1px solid var(--border);">
     <button class="btn btn-sm" onclick="document.getElementById('panelLeft').scrollIntoView({behavior:'smooth'})">📝 收集</button>
     <button class="btn btn-sm" onclick="document.getElementById('panelMid').scrollIntoView({behavior:'smooth'})">📍 地点</button>
     <button class="btn btn-sm" onclick="document.getElementById('panelRight').scrollIntoView({behavior:'smooth'})">🗓️ 行程</button>
 </div>
 
-<!-- 各种弹窗 -->
 <div class="modal-overlay" id="createModal" style="display:none;">
     <div class="modal">
         <h3>创建旅行房间</h3>
         <input type="text" id="roomName" placeholder="房间名称"><br><br>
         <input type="text" id="destCity" placeholder="目的地城市"><br><br>
-        <button class="btn btn-primary" onclick="window.createRoom()">创建</button>
+        <button class="btn btn-primary" onclick="createRoom()">创建</button>
         <button class="btn" onclick="document.getElementById('createModal').style.display='none'">取消</button>
     </div>
 </div>
@@ -175,7 +162,7 @@
     <div class="modal">
         <h3>加入房间</h3>
         <input type="text" id="joinCode" placeholder="6位分享码"><br><br>
-        <button class="btn btn-primary" onclick="window.joinRoom()">加入</button>
+        <button class="btn btn-primary" onclick="joinRoom()">加入</button>
         <button class="btn" onclick="document.getElementById('joinModal').style.display='none'">取消</button>
     </div>
 </div>
@@ -186,14 +173,8 @@
     </div>
 </div>
 
-<!-- 引入 Supabase UMD 版本，不依赖 module -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ==================== 全局变量与初始化 ====================
-const SUPABASE_URL = 'https://wysbkblkuznbfmuyhzgc.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_C3LaoqqseHc3oPlPxDqhlw_sY7tMfH1';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+// ==================== 核心状态管理 ====================
 let appData = {
     activeRoomCode: null,
     activeUserId: 'user_1',
@@ -204,10 +185,8 @@ let appData = {
 };
 let currentFilter = 'all';
 
-// ==================== 持久化 ====================
-function saveLocal() {
-    localStorage.setItem('trip_puzzle', JSON.stringify(appData));
-}
+// 持久化存储
+function saveLocal() { localStorage.setItem('trip_puzzle', JSON.stringify(appData)); }
 function loadLocal() {
     const saved = localStorage.getItem('trip_puzzle');
     if (saved) {
@@ -218,26 +197,15 @@ function loadLocal() {
 }
 loadLocal();
 
-// ==================== 实时同步 ====================
-let realtimeChannel = null;
-async function subscribeRoom(code) {
-    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-    realtimeChannel = supabase.channel(`room:${code}`)
-        .on('postgres_changes', { event:'*', schema:'public', table:'rooms', filter:`share_code=eq.${code}` }, payload => {
-            if (payload.new && payload.new.data) {
-                appData.rooms[code] = payload.new.data;
-                saveLocal();
-                if (appData.activeRoomCode === code) refreshAll();
-            }
-        })
-        .subscribe();
-}
-async function syncRoom(room) {
-    await supabase.from('rooms').upsert({
-        share_code: room.shareCode,
-        data: room,
-        updated_at: new Date()
-    });
+// 获取当前房间和用户
+function getRoom() { return appData.activeRoomCode ? appData.rooms[appData.activeRoomCode] : null; }
+function getUser() { return appData.users[appData.activeUserId]; }
+
+// Toast 提示
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
 }
 
 // ==================== 房间操作 ====================
@@ -248,32 +216,28 @@ function createRoom() {
     const code = Math.random().toString(36).substring(2,8).toUpperCase();
     const room = {
         shareCode: code, name, destination: dest,
-        startDate:'', days:2, contents:[], itinerary:[],
-        dayNotes:{}, placeNotes:{}, memberCities:{},
-        completed:false
+        startDate: '', days: 2, contents: [], itinerary: null,
+        _selected: [], memberCities: {}, completed: false
     };
     room.memberCities[appData.activeUserId] = getUser().city || '未知';
     appData.rooms[code] = room;
     appData.activeRoomCode = code;
     saveLocal();
-    syncRoom(room);
-    subscribeRoom(code);
     document.getElementById('createModal').style.display='none';
     refreshAll();
     toast('房间创建成功！分享码：'+code);
 }
-async function joinRoom() {
+
+function joinRoom() {
     const code = document.getElementById('joinCode').value.trim().toUpperCase();
-    const { data } = await supabase.from('rooms').select('data').eq('share_code', code).single();
-    if (!data) return toast('房间不存在');
-    appData.rooms[code] = data.data;
+    if (!appData.rooms[code]) return toast('房间不存在');
     appData.activeRoomCode = code;
     saveLocal();
-    subscribeRoom(code);
     document.getElementById('joinModal').style.display='none';
     refreshAll();
     toast('已加入房间');
 }
+
 function finishTrip() {
     const room = getRoom(); if (!room) return;
     if (!confirm('确认完成旅行？房间将存入档案馆。')) return;
@@ -282,27 +246,42 @@ function finishTrip() {
     delete appData.rooms[room.shareCode];
     appData.activeRoomCode = null;
     saveLocal();
-    syncRoom(room);
     refreshAll();
     toast('已存档');
 }
-function getRoom() {
-    return appData.activeRoomCode ? appData.rooms[appData.activeRoomCode] : null;
+
+function showArchiveModal() {
+    const list = document.getElementById('archiveList');
+    const archiveKeys = Object.keys(appData.archives);
+    if (archiveKeys.length === 0) {
+        list.innerHTML = '<p>还没有存档的旅行</p>';
+    } else {
+        list.innerHTML = archiveKeys.map(code => {
+            const r = appData.archives[code];
+            return `<div style="margin-bottom:8px;"><strong>${r.name}</strong> (${r.shareCode}) - ${r.destination} <button class="btn btn-sm" onclick="loadArchive('${code}')">查看</button></div>`;
+        }).join('');
+    }
+    document.getElementById('archiveModal').style.display='flex';
 }
-function getUser() {
-    return appData.users[appData.activeUserId];
+function loadArchive(code) {
+    appData.activeRoomCode = code;
+    if (!appData.rooms[code]) {
+        appData.rooms[code] = appData.archives[code];
+    }
+    document.getElementById('archiveModal').style.display='none';
+    refreshAll();
+    toast('正在查看存档');
 }
 
 // ==================== 成员管理 ====================
 function switchUser() {
     const ids = Object.keys(appData.users);
     const cur = ids.indexOf(appData.activeUserId);
-    const next = ids[(cur+1) % ids.length];
-    appData.activeUserId = next;
+    appData.activeUserId = ids[(cur+1) % ids.length];
     refreshAll();
 }
 function addMember() {
-    const name = document.getElementById('userName').value.trim() || '成员'+appData.nextUserId;
+    const name = document.getElementById('userName').value.trim() || ('成员'+appData.nextUserId);
     const city = document.getElementById('userCity').value.trim() || '未知';
     const id = 'user_'+appData.nextUserId++;
     appData.users[id] = { name, city };
@@ -314,7 +293,7 @@ function addMember() {
     toast('已添加成员：'+name);
 }
 
-// ==================== 内容收集与AI提取 ====================
+// ==================== 内容提交与AI提取 ====================
 function submitContent() {
     const room = getRoom(); if (!room) return;
     const text = document.getElementById('contentText').value.trim();
@@ -323,22 +302,22 @@ function submitContent() {
     user.name = document.getElementById('userName').value.trim() || user.name;
     user.city = document.getElementById('userCity').value.trim() || user.city;
     room.memberCities[appData.activeUserId] = user.city;
-    const platform = document.getElementById('platformSelect').value;
+
     const places = simulateExtract(text);
     room.contents.push({
         id: Date.now().toString(),
         userId: appData.activeUserId,
         userName: user.name,
-        platform,
+        platform: document.getElementById('platformSelect').value,
         text: text.substring(0,300),
         places,
         time: new Date().toISOString()
     });
     document.getElementById('contentText').value = '';
     saveLocal();
-    syncRoom(room);
     refreshAll();
 }
+
 function simulateExtract(text) {
     const known = [
         { kw:['故宫'], type:'attraction', reason:'历史文化地标' },
@@ -368,12 +347,18 @@ function aggregatePlaces() {
     const highFreq = all.filter(p => p.count >= 2);
     return { highFreq, all };
 }
+
 function setFilter(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.filter-btn[onclick="window.setFilter('${filter}')"]`).classList.add('active');
+    // 找到对应按钮设置active
+    const btns = document.querySelectorAll('.filter-btn');
+    btns.forEach(b => {
+        if (b.textContent.includes(filter) || (filter==='all' && b.textContent==='全部')) b.classList.add('active');
+    });
     renderMiddle();
 }
+
 function togglePlaceSelect(name) {
     const room = getRoom(); if (!room) return;
     if (!room._selected) room._selected = [];
@@ -381,8 +366,8 @@ function togglePlaceSelect(name) {
     if (idx >= 0) room._selected.splice(idx,1);
     else room._selected.push(name);
     saveLocal();
-    syncRoom(room);
-    refreshAll();
+    renderMiddle();
+    renderRight();
 }
 
 // ==================== 行程生成 ====================
@@ -400,11 +385,10 @@ function generateItinerary() {
     chosen.forEach((p, i) => itinerary[i % days].places.push(p));
     room.itinerary = itinerary;
     saveLocal();
-    syncRoom(room);
     refreshAll();
 }
 
-// ==================== 天气 ====================
+// ==================== 天气与倒计时 ====================
 async function updateWeather() {
     const room = getRoom();
     const badge = document.getElementById('weatherBadge');
@@ -420,8 +404,7 @@ function updateCountdown() {
     room.startDate = document.getElementById('startDate').value;
     room.days = parseInt(document.getElementById('daysSelect').value);
     saveLocal();
-    syncRoom(room);
-    refreshAll();
+    renderHeader();
 }
 
 // ==================== 导出/导入 ====================
@@ -443,51 +426,12 @@ function importRoom(event) {
             appData.rooms[roomData.shareCode] = roomData;
             appData.activeRoomCode = roomData.shareCode;
             saveLocal();
-            subscribeRoom(roomData.shareCode);
             refreshAll();
             toast('导入成功');
         } catch(ex) { toast('无效文件'); }
     };
     reader.readAsText(file);
     event.target.value = '';
-}
-
-// ==================== 弹窗显示 ====================
-function showCreateModal() { document.getElementById('createModal').style.display='flex'; }
-function showJoinModal() { document.getElementById('joinModal').style.display='flex'; }
-function showArchiveModal() {
-    const list = document.getElementById('archiveList');
-    if (Object.keys(appData.archives).length === 0) {
-        list.innerHTML = '<p>还没有存档的旅行</p>';
-    } else {
-        list.innerHTML = Object.values(appData.archives).map(r =>
-            `<div style="margin-bottom:8px;"><strong>${r.name}</strong> (${r.shareCode}) - 目的地:${r.destination} <button class="btn btn-sm" onclick="window.loadArchive('${r.shareCode}')">查看</button></div>`
-        ).join('');
-    }
-    document.getElementById('archiveModal').style.display='flex';
-}
-function loadArchive(code) {
-    const room = appData.archives[code];
-    if (room) {
-        appData.activeRoomCode = code;
-        appData.rooms[code] = room; // 临时加载
-        document.getElementById('archiveModal').style.display='none';
-        refreshAll();
-        toast('正在查看存档：'+room.name);
-    }
-}
-function showDestModal() { toast('目的地推荐：功能待完善，可根据成员城市计算均衡目的地'); }
-function showTransportModal() { toast('交通查询：功能待完善，请使用外部平台查询'); }
-
-// ==================== 辅助 ====================
-function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-}
-function copyShareCode() {
-    const room = getRoom();
-    if (room) navigator.clipboard.writeText(room.shareCode).then(() => toast('已复制分享码'));
 }
 
 // ==================== 渲染函数 ====================
@@ -511,9 +455,10 @@ function renderHeader() {
 }
 function renderLeft() {
     const room = getRoom();
-    document.getElementById('currentUserLabel').textContent = getUser().name;
-    document.getElementById('userName').value = getUser().name;
-    document.getElementById('userCity').value = getUser().city || '';
+    const user = getUser();
+    document.getElementById('currentUserLabel').textContent = user.name;
+    document.getElementById('userName').value = user.name;
+    document.getElementById('userCity').value = user.city || '';
     const list = document.getElementById('contentsList');
     if (!room || !room.contents.length) {
         list.innerHTML = '<div style="color:gray; text-align:center;">还没有内容</div>';
@@ -535,17 +480,19 @@ function renderMiddle() {
     const highF = currentFilter==='all' ? highFreq : highFreq.filter(p => p.type===currentFilter);
     document.getElementById('highFreqSection').style.display = highF.length ? 'block' : 'none';
     document.getElementById('highFreqList').innerHTML = highF.map(p => `
-        <div class="place-card high-freq" onclick="window.togglePlaceSelect('${p.name}')">
+        <div class="place-card high-freq" onclick="togglePlaceSelect('${p.name}')">
             <strong>${p.name}</strong> <span style="color:var(--gold);">🔥${p.count}</span>
             <div style="font-size:0.7em;">${p.users.join('、')}</div>
+            ${(getRoom()._selected||[]).includes(p.name) ? '<span style="color:green;">✅</span>' : ''}
         </div>
     `).join('');
     const normalPlaces = filtered.filter(p => !highF.includes(p));
-    document.getElementById('allPlacesList').innerHTML = normalPlaces.map(p => `
-        <div class="place-card" onclick="window.togglePlaceSelect('${p.name}')">
+    document.getElementById('allPlacesList').innerHTML = normalPlaces.length ? normalPlaces.map(p => `
+        <div class="place-card" onclick="togglePlaceSelect('${p.name}')">
             <strong>${p.name}</strong> <span style="color:gray;">${p.count}次</span>
+            ${(getRoom()._selected||[]).includes(p.name) ? '<span style="color:green;">✅</span>' : ''}
         </div>
-    `).join('');
+    `).join('') : '<div style="color:gray;">暂无此类地点</div>';
 }
 function renderRight() {
     const room = getRoom();
@@ -562,32 +509,18 @@ function renderRight() {
     `).join('');
 }
 
-// ==================== 初始化订阅 ====================
-if (appData.activeRoomCode) {
-    subscribeRoom(appData.activeRoomCode);
+// 简单弹窗提示
+function showDestModal() { toast('目的地推荐：根据所有成员城市计算均衡目的地（待实现）'); }
+function showTransportModal() { toast('交通查询：请使用外部平台查询'); }
+function showCreateModal() { document.getElementById('createModal').style.display='flex'; }
+function showJoinModal() { document.getElementById('joinModal').style.display='flex'; }
+function copyShareCode() {
+    const room = getRoom();
+    if (room) { navigator.clipboard.writeText(room.shareCode); toast('已复制分享码'); }
 }
-refreshAll();
 
-// 确保所有交互函数在全局作用域
-window.createRoom = createRoom;
-window.joinRoom = joinRoom;
-window.finishTrip = finishTrip;
-window.submitContent = submitContent;
-window.generateItinerary = generateItinerary;
-window.switchUser = switchUser;
-window.addMember = addMember;
-window.showCreateModal = showCreateModal;
-window.showJoinModal = showJoinModal;
-window.showArchiveModal = showArchiveModal;
-window.loadArchive = loadArchive;
-window.showDestModal = showDestModal;
-window.showTransportModal = showTransportModal;
-window.setFilter = setFilter;
-window.togglePlaceSelect = togglePlaceSelect;
-window.copyShareCode = copyShareCode;
-window.exportRoom = exportRoom;
-window.importRoom = importRoom;
-window.updateCountdown = updateCountdown;
+// 初始化渲染
+refreshAll();
 </script>
 </body>
 </html>
