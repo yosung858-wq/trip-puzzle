@@ -3,69 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🧩 旅行拼图 · 在线协作</title>
+    <title>🧩 旅行拼图 · 豆包AI在线协作</title>
     <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #f5f3f0; --surface: #fffdf9; --border: #e8e0d5; --text: #3d3226;
-            --accent: #e8784a; --gold: #c9a65b; --radius: 12px;
-            --font: 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-        }
+        :root { --bg: #f5f3f0; --surface: #fffdf9; --border: #e8e0d5; --text: #3d3226; --accent: #e8784a; --gold: #c9a65b; --radius: 12px; --font: 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: var(--font); background: var(--bg); color: var(--text); }
-        .app-header {
-            background: var(--surface); border-bottom:1px solid var(--border);
-            padding:10px 15px; display:flex; align-items:center; justify-content:space-between;
-            flex-wrap:wrap; gap:8px; position:sticky; top:0; z-index:100;
-        }
+        .app-header { background: var(--surface); border-bottom:1px solid var(--border); padding:10px 15px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; position:sticky; top:0; z-index:100; }
         .main-container { display: flex; height: calc(100vh - 56px); overflow-x: auto; scroll-snap-type: x mandatory; }
-        .panel {
-            min-width: 100%; max-width: 100%; flex: none;
-            border-right: 1px solid var(--border); background: var(--surface);
-            display: flex; flex-direction: column; scroll-snap-align: start;
-        }
+        .panel { min-width: 100%; max-width: 100%; flex: none; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; scroll-snap-align: start; }
         @media (min-width: 768px) { .panel { min-width: 33.33%; max-width: 33.33%; } }
         .panel-header { padding:12px; font-weight:700; background:#fefaf5; border-bottom:1px solid var(--border); }
         .panel-body { flex:1; overflow-y:auto; padding:10px; }
-        .btn {
-            padding:8px 14px; border-radius:20px; border:none; cursor:pointer;
-            font-weight:600; font-size:0.85em; font-family: var(--font);
-            background: transparent; border:2px solid var(--border); color: var(--text);
-            white-space: nowrap; transition:0.2s;
-        }
+        .btn { padding:8px 14px; border-radius:20px; border:none; cursor:pointer; font-weight:600; font-size:0.85em; font-family: var(--font); background: transparent; border:2px solid var(--border); color: var(--text); white-space: nowrap; transition:0.2s; }
         .btn-primary { background: var(--accent); color:#fff; border-color: var(--accent); }
         .btn-sm { padding:5px 10px; font-size:0.75em; }
-        .toast {
-            position:fixed; top:15px; left:50%; transform:translateX(-50%);
-            background: #3d3226; color:#fff; padding:10px 20px; border-radius:20px;
-            z-index:999; opacity:0; transition:0.3s; font-size:0.9em;
-        }
+        .toast { position:fixed; top:15px; left:50%; transform:translateX(-50%); background: #3d3226; color:#fff; padding:10px 20px; border-radius:20px; z-index:999; opacity:0; transition:0.3s; font-size:0.9em; }
         .toast.show { opacity:1; }
-        input, textarea, select {
-            font-family: var(--font); border:1.5px solid var(--border);
-            border-radius:8px; padding:8px; font-size:0.9em; width:100%;
-            background: var(--surface); margin:4px 0;
-        }
-        .place-card {
-            background: #fff; border:1px solid var(--border); border-radius: var(--radius);
-            padding:8px; margin-bottom:6px; cursor:pointer; font-size:0.9em;
-        }
+        input, textarea, select { font-family: var(--font); border:1.5px solid var(--border); border-radius:8px; padding:8px; font-size:0.9em; width:100%; background: var(--surface); margin:4px 0; }
+        .place-card { background: #fff; border:1px solid var(--border); border-radius: var(--radius); padding:8px; margin-bottom:6px; cursor:pointer; font-size:0.9em; }
         .place-card.high-freq { border-left:4px solid var(--gold); }
         .day-block { background: #fefaf5; border-radius: var(--radius); padding:10px; margin-bottom:8px; }
-        .modal-overlay {
-            position:fixed; top:0; left:0; width:100%; height:100%;
-            background:rgba(0,0,0,0.4); z-index:200; display:flex;
-            align-items:center; justify-content:center;
-        }
-        .modal {
-            background:#fff; border-radius:var(--radius); padding:24px;
-            max-width:400px; width:90%; max-height:80vh; overflow-y:auto;
-        }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:center; justify-content:center; }
+        .modal { background:#fff; border-radius:var(--radius); padding:24px; max-width:400px; width:90%; max-height:80vh; overflow-y:auto; }
         .filter-btn.active { background: var(--accent); color:#fff; border-color: var(--accent); }
-        .image-upload-area {
-            border:2px dashed var(--border); border-radius:8px; padding:20px;
-            text-align:center; cursor:pointer; background:#fafaf7; margin-top:4px;
-        }
+        .image-upload-area { border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:#fafaf7; margin-top:4px; }
         .image-upload-area:hover { border-color: var(--accent); background:#fff7f2; }
         .preview-img { max-width:100%; max-height:150px; border-radius:6px; margin-top:8px; display:none; }
     </style>
@@ -75,10 +37,12 @@
 <header class="app-header">
     <div style="font-size:1.4em; font-weight:700; color:var(--accent);">🧩 旅行拼图</div>
     <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-        <button class="btn btn-sm" onclick="showAISettings()">🤖 自定义AI</button>
+        <button class="btn btn-sm" onclick="showAISettings()">🤖 豆包AI</button>
         <span id="roomCodeDisplay" style="background:#fefaf5; padding:5px 10px; border-radius:14px; font-weight:600; font-family:monospace; cursor:pointer;" onclick="copyShareCode()">—</span>
         <button class="btn btn-sm" onclick="showCreateModal()">✨ 创建</button>
         <button class="btn btn-sm" onclick="showJoinModal()">🔗 加入</button>
+        <button class="btn btn-sm" onclick="exportRoom()">📤 导出</button>
+        <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">📥 导入</button>
         <button class="btn btn-sm" onclick="finishTrip()">✅ 存档</button>
         <button class="btn btn-sm" onclick="showArchiveModal()">📦 档案馆</button>
         <span id="destinationLabel" style="font-weight:600;"></span>
@@ -86,6 +50,7 @@
         <span id="weatherBadge" style="background:#f0f4f8; padding:4px 8px; border-radius:10px; display:none;"></span>
     </div>
 </header>
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="importRoom(event)">
 
 <div class="main-container">
     <!-- 左栏：内容收集 -->
@@ -104,9 +69,7 @@
             </div>
             <div id="textInputGroup"><textarea id="contentText" placeholder="粘贴攻略文字..." rows="4"></textarea></div>
             <div id="imageInputGroup" style="display:none;">
-                <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">
-                    📷 点击上传截图 或拖拽到此处
-                </div>
+                <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">📷 点击上传截图 或拖拽到此处</div>
                 <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
                 <img id="imagePreview" class="preview-img" alt="预览">
             </div>
@@ -150,21 +113,28 @@
     <button class="btn btn-sm" onclick="document.getElementById('panelRight').scrollIntoView({behavior:'smooth'})">🗓️ 行程</button>
 </div>
 
-<!-- 弹窗们 -->
+<!-- 弹窗 -->
 <div class="modal-overlay" id="createModal" style="display:none;"><div class="modal"><h3>创建房间</h3><input id="roomName" placeholder="房间名称"><input id="destCity" placeholder="目的地城市（选填）"><button class="btn btn-primary" onclick="createRoom()">创建</button><button class="btn" onclick="closeModal('createModal')">取消</button></div></div>
 <div class="modal-overlay" id="joinModal" style="display:none;"><div class="modal"><h3>加入房间</h3><input id="joinCode" placeholder="分享码"><button class="btn btn-primary" onclick="joinRoom()">加入</button><button class="btn" onclick="closeModal('joinModal')">取消</button></div></div>
 <div class="modal-overlay" id="archiveModal" style="display:none;"><div class="modal"><h3>📦 档案馆</h3><div id="archiveList"></div><button class="btn" onclick="closeModal('archiveModal')">关闭</button></div></div>
-<div class="modal-overlay" id="aiSettingsModal" style="display:none;"><div class="modal"><h3>🤖 自定义AI接口</h3><p style="font-size:0.8em;">支持豆包、DeepSeek、OpenAI 等兼容接口</p><input id="aiApiKey" placeholder="API Key (ark-... 或 sk-...)" type="password"><input id="aiBaseUrl" placeholder="接口地址 (如 https://ark.cn-beijing.volces.com/api/v3)"><input id="aiModel" placeholder="模型名称 (如 ep-xxxx 或 deepseek-chat)"><button class="btn btn-primary" onclick="saveAISettings()">保存</button><button class="btn" onclick="closeModal('aiSettingsModal')">取消</button></div></div>
+<div class="modal-overlay" id="aiSettingsModal" style="display:none;"><div class="modal"><h3>🤖 豆包AI设置</h3><p style="font-size:0.8em;">请填入火山引擎豆包模型信息</p><input id="aiApiKey" placeholder="API Key (ark-...)" type="password"><input id="aiBaseUrl" placeholder="接口地址 (https://ark.cn-beijing.volces.com/api/v3)"><input id="aiModel" placeholder="推理接入点ID (ep-xxxx...）"><button class="btn btn-primary" onclick="saveAISettings()">保存</button><button class="btn" onclick="closeModal('aiSettingsModal')">取消</button></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ========== Supabase 配置（如果需要在线协作，请替换为自己的信息） ==========
-const SUPABASE_URL = 'https://你的项目ID.supabase.co';   // 留空则仅本地存储
-const SUPABASE_KEY = '你的anon key';
-let supabase = null;
-if (SUPABASE_URL.includes('supabase')) { try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {} }
+// ========== 预置豆包配置（API Key 和地址已填入，模型ID需在页面设置中补充） ==========
+const DEFAULT_AI = {
+    apiKey: 'ark-4ffb0e3e-50a8-41d2-9382-1dfe52ebbbfb-c594b',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: ''  // 留空，用户需自行填写接入点ID
+};
 
-// ========== 全局状态 ==========
+// Supabase 配置（如需在线协作，替换为自己的信息）
+const SUPABASE_URL = '';  // 留空则仅本地存储
+const SUPABASE_KEY = '';
+let supabase = null;
+try { if (SUPABASE_URL) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
+
+// 全局状态
 let appData = {
     activeRoomCode: null,
     activeUserId: 'user_1',
@@ -172,29 +142,29 @@ let appData = {
     nextUserId: 2,
     rooms: {},
     archives: {},
-    ai: { apiKey:'', baseUrl:'', model:'' }
+    ai: { ...DEFAULT_AI }
 };
 let currentFilter = 'all';
 let inputMode = 'text';
 
-// 加载本地存储
+// 加载持久化数据
 function loadAll() {
     const saved = localStorage.getItem('trip_puzzle');
     if (saved) { try { appData = { ...appData, ...JSON.parse(saved) }; } catch(e) {} }
     const code = new URLSearchParams(window.location.search).get('code');
     if (code && appData.rooms[code]) appData.activeRoomCode = code;
     const ai = localStorage.getItem('trip_ai');
-    if (ai) { try { appData.ai = { ...appData.ai, ...JSON.parse(ai) }; } catch(e) {} }
+    if (ai) { try { appData.ai = { ...DEFAULT_AI, ...JSON.parse(ai) }; } catch(e) {} }
 }
 function saveLocal() { localStorage.setItem('trip_puzzle', JSON.stringify(appData)); }
 function saveAi() { localStorage.setItem('trip_ai', JSON.stringify(appData.ai)); }
 
-// ========== 实时同步 ==========
+// ========== 实时同步（可选） ==========
 async function syncRoom(room) { if (supabase) await supabase.from('rooms').upsert({ share_code: room.shareCode, data: room, updated_at: new Date() }); }
 async function subscribeRoom(code) {
     if (!supabase) return;
     supabase.channel(`room:${code}`).on('postgres_changes', { event:'*', schema:'public', table:'rooms', filter:`share_code=eq.${code}` }, payload => {
-        if (payload.new && payload.new.data) {
+        if (payload.new?.data) {
             appData.rooms[code] = payload.new.data;
             saveLocal();
             if (appData.activeRoomCode === code) refreshAll();
@@ -225,7 +195,7 @@ async function joinRoom() {
             const { data } = await supabase.from('rooms').select('data').eq('share_code', code).single();
             if (data) appData.rooms[code] = data.data;
             else return toast('房间不存在');
-        } else return toast('房间不存在');
+        } else return toast('房间不存在（离线模式，请对方导出文件发给你）');
     }
     appData.activeRoomCode = code;
     saveLocal();
@@ -262,10 +232,31 @@ function addMember() {
 }
 
 // ========== 截图切换 ==========
-function toggleInputMode() { /* 同上不变 */ }
-function handleImageUpload(e) { /* 同上不变 */ }
+function toggleInputMode() {
+    const btn = document.getElementById('toggleModeBtn');
+    if (inputMode === 'text') {
+        inputMode = 'image';
+        document.getElementById('textInputGroup').style.display = 'none';
+        document.getElementById('imageInputGroup').style.display = 'block';
+        btn.textContent = '📝 文字模式';
+    } else {
+        inputMode = 'text';
+        document.getElementById('textInputGroup').style.display = 'block';
+        document.getElementById('imageInputGroup').style.display = 'none';
+        btn.textContent = '📷 截图模式';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('imageInput').value = '';
+    }
+}
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { const img = document.getElementById('imagePreview'); img.src = ev.target.result; img.style.display = 'block'; };
+    reader.readAsDataURL(file);
+}
 
-// ========== AI 提取（通用接口） ==========
+// ========== AI 提取（豆包/OpenAI兼容） ==========
 async function extractWithAI(text) {
     const { apiKey, baseUrl, model } = appData.ai;
     if (!apiKey || !baseUrl || !model) return null;
@@ -280,8 +271,18 @@ async function extractWithAI(text) {
         return match ? JSON.parse(match[0]) : null;
     } catch(e) { return null; }
 }
-function simulateExtract(text) { /* 保留基本关键词 */ }
-
+function simulateExtract(text) {
+    const known = [
+        { kw:['故宫'], name:'故宫', type:'attraction', reason:'历史文化地标' },
+        { kw:['烤鸭','四季民福'], name:'四季民福烤鸭店', type:'restaurant', reason:'烤鸭名店' },
+        { kw:['花间堂'], name:'花间堂酒店', type:'accommodation', reason:'特色酒店' },
+        { kw:['长城','八达岭'], name:'八达岭长城', type:'attraction', reason:'世界遗产' },
+        { kw:['南锣鼓巷'], name:'南锣鼓巷', type:'attraction', reason:'胡同文化' },
+        { kw:['火锅','重庆火锅'], name:'重庆火锅', type:'restaurant', reason:'地道美食' },
+        { kw:['迪士尼','上海迪士尼'], name:'上海迪士尼', type:'attraction', reason:'主题乐园' },
+    ];
+    return known.filter(p => p.kw.some(w => text.includes(w))).map(p => ({name:p.name, type:p.type, reason:p.reason}));
+}
 async function submitContent() {
     const room = getRoom(); if (!room) return toast('请先创建或加入房间');
     const user = getUser();
@@ -289,13 +290,26 @@ async function submitContent() {
     user.city = document.getElementById('userCity').value.trim() || user.city;
     if (!room.memberCities) room.memberCities = {};
     room.memberCities[appData.activeUserId] = user.city;
-    let rawText = (inputMode==='text') ? document.getElementById('contentText').value.trim() : '[截图内容]';
-    if (!rawText && inputMode==='text') return toast('请粘贴攻略文字');
+
+    let rawText = '';
+    if (inputMode === 'text') {
+        rawText = document.getElementById('contentText').value.trim();
+        if (!rawText) return toast('请粘贴攻略文字');
+    } else {
+        const preview = document.getElementById('imagePreview');
+        if (!preview.src || preview.style.display === 'none') return toast('请上传截图');
+        rawText = '[截图内容]';
+    }
+
     document.getElementById('extractStatus').textContent = '🤖 AI 分析中...';
     let places = await extractWithAI(rawText);
     if (!places) places = simulateExtract(rawText);
-    room.contents.push({ id: Date.now().toString(), userId: appData.activeUserId, userName: user.name, text: rawText.substring(0,200), places, time: new Date().toISOString() });
-    if (inputMode==='text') document.getElementById('contentText').value = '';
+    room.contents.push({
+        id: Date.now().toString(), userId: appData.activeUserId,
+        userName: user.name, text: rawText.substring(0,200),
+        places, time: new Date().toISOString()
+    });
+    if (inputMode === 'text') document.getElementById('contentText').value = '';
     else { document.getElementById('imagePreview').style.display = 'none'; document.getElementById('imageInput').value = ''; }
     saveLocal(); if (supabase) syncRoom(room);
     refreshAll();
@@ -303,11 +317,49 @@ async function submitContent() {
     setTimeout(() => document.getElementById('extractStatus').textContent = '', 3000);
 }
 
-// ========== 地点聚合与行程 ==========
-function aggregatePlaces() { /* 同前 */ }
-function setFilter(f) { /* 同前 */ }
-function togglePlaceSelect(name) { /* 同前 */ }
-function generateItinerary() { /* 同前 */ }
+// ========== 地点聚合 ==========
+function aggregatePlaces() {
+    const room = getRoom(); if (!room) return { highFreq:[], all:[] };
+    const stats = {};
+    room.contents.forEach(c => c.places.forEach(p => {
+        const key = p.name;
+        if (!stats[key]) stats[key] = { ...p, count:0, users:[] };
+        stats[key].count++;
+        if (!stats[key].users.includes(c.userName)) stats[key].users.push(c.userName);
+    }));
+    const all = Object.values(stats).sort((a,b) => b.count - a.count);
+    return { highFreq: all.filter(p => p.count>=2), all };
+}
+function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.filter-btn[onclick="setFilter('${f}')"]`).classList.add('active');
+    renderMiddle();
+}
+function togglePlaceSelect(name) {
+    const room = getRoom(); if (!room) return;
+    if (!room._selected) room._selected = [];
+    const idx = room._selected.indexOf(name);
+    if (idx >= 0) room._selected.splice(idx,1); else room._selected.push(name);
+    saveLocal(); if (supabase) syncRoom(room);
+    renderMiddle(); renderRight();
+}
+function generateItinerary() {
+    const room = getRoom(); if (!room) return;
+    const selected = room._selected || [];
+    if (!selected.length) return toast('请先点击地点加入行程');
+    const { all } = aggregatePlaces();
+    const chosen = all.filter(p => selected.includes(p.name));
+    const days = parseInt(document.getElementById('daysSelect').value) || 2;
+    room.days = days;
+    room.startDate = document.getElementById('startDate').value;
+    const itinerary = [];
+    for (let d=0; d<days; d++) itinerary.push({ day:d+1, places:[] });
+    chosen.forEach((p, i) => itinerary[i%days].places.push(p));
+    room.itinerary = itinerary;
+    saveLocal(); if (supabase) syncRoom(room);
+    refreshAll();
+}
 
 // ========== 天气（安全版） ==========
 async function updateWeather() {
@@ -330,9 +382,53 @@ async function updateWeather() {
         badge.style.display = 'inline-block';
     } catch(e) { badge.style.display='none'; }
 }
-function updateCountdown() { /* 同前 */ }
+function updateCountdown() {
+    const room = getRoom(); if (!room) return;
+    room.startDate = document.getElementById('startDate').value;
+    room.days = parseInt(document.getElementById('daysSelect').value);
+    saveLocal(); if (supabase) syncRoom(room);
+    refreshAll();
+}
 
-// ========== AI 设置弹窗 ==========
+// ========== 导出/导入 ==========
+function exportRoom() {
+    const room = getRoom(); if (!room) return toast('没有打开的房间');
+    const blob = new Blob([JSON.stringify(room, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `旅行拼图_${room.shareCode}.json`;
+    a.click();
+}
+function importRoom(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        try {
+            const room = JSON.parse(ev.target.result);
+            if (!room.shareCode) throw new Error('无效文件');
+            appData.rooms[room.shareCode] = room;
+            appData.activeRoomCode = room.shareCode;
+            saveLocal(); subscribeRoom(room.shareCode); refreshAll(); toast('房间导入成功');
+        } catch(ex) { toast('无效的房间文件'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+// ========== 弹窗辅助 ==========
+function showCreateModal() { document.getElementById('createModal').style.display='flex'; }
+function showJoinModal() { document.getElementById('joinModal').style.display='flex'; }
+function showArchiveModal() {
+    const list = document.getElementById('archiveList');
+    list.innerHTML = Object.values(appData.archives).length
+        ? Object.values(appData.archives).map(r => `<div style="margin-bottom:6px;"><b>${r.name}</b> (${r.shareCode}) <button class="btn btn-sm" onclick="loadArchive('${r.shareCode}')">查看</button></div>`).join('')
+        : '<p>暂无存档</p>';
+    document.getElementById('archiveModal').style.display='flex';
+}
+function loadArchive(code) {
+    const room = appData.archives[code];
+    if (room) { appData.activeRoomCode = code; appData.rooms[code] = room; closeModal('archiveModal'); refreshAll(); toast('查看存档：'+room.name); }
+}
 function showAISettings() {
     document.getElementById('aiApiKey').value = appData.ai.apiKey;
     document.getElementById('aiBaseUrl').value = appData.ai.baseUrl;
@@ -345,24 +441,70 @@ function saveAISettings() {
     appData.ai.model = document.getElementById('aiModel').value.trim();
     saveAi();
     closeModal('aiSettingsModal');
-    toast('AI 设置已保存');
+    toast(appData.ai.model ? '豆包AI已配置，提取时将使用模型' : '已保存AI设置（请填写模型接入点ID）');
 }
-
-// ========== 渲染与辅助 ==========
-function refreshAll() { renderHeader(); renderLeft(); renderMiddle(); renderRight(); updateWeather(); }
-function renderHeader() { /* 同前 */ }
-function renderLeft() { /* 同前 */ }
-function renderMiddle() { /* 同前 */ }
-function renderRight() { /* 同前 */ }
-function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
-function showCreateModal() { document.getElementById('createModal').style.display='flex'; }
-function showJoinModal() { document.getElementById('joinModal').style.display='flex'; }
-function showArchiveModal() { /* 同前 */ }
-function loadArchive(code) { /* 同前 */ }
 function closeModal(id) { document.getElementById(id).style.display='none'; }
-function copyShareCode() { const room = getRoom(); if (room) navigator.clipboard.writeText(room.shareCode).then(() => toast('已复制分享码')); }
+function copyShareCode() { const room = getRoom(); if (room) navigator.clipboard.writeText(room.shareCode).then(() => toast('分享码已复制')); }
 
-// 拖拽上传
+// ========== 渲染 ==========
+function refreshAll() { renderHeader(); renderLeft(); renderMiddle(); renderRight(); updateWeather(); }
+function renderHeader() {
+    const room = getRoom();
+    document.getElementById('roomCodeDisplay').textContent = room ? room.shareCode : '—';
+    document.getElementById('destinationLabel').textContent = room?.destination ? '🎯 '+room.destination : '';
+    const cd = document.getElementById('countdownBadge');
+    if (room?.startDate) {
+        const diff = Math.ceil((new Date(room.startDate) - new Date())/(86400000));
+        cd.textContent = diff>0 ? `⏳ ${diff}天` : '🎉 出发!';
+        cd.style.display = 'inline-block';
+    } else cd.style.display = 'none';
+    document.getElementById('startDate').value = room?.startDate || '';
+    document.getElementById('daysSelect').value = room?.days || 2;
+}
+function renderLeft() {
+    const room = getRoom();
+    document.getElementById('currentUserLabel').textContent = getUser().name;
+    document.getElementById('userName').value = getUser().name;
+    document.getElementById('userCity').value = getUser().city||'';
+    const list = document.getElementById('contentsList');
+    if (!room?.contents.length) { list.innerHTML = '<div style="color:gray;text-align:center;">还没有内容</div>'; return; }
+    list.innerHTML = room.contents.map(c => `
+        <div style="background:#fff; border-radius:8px; padding:8px; margin-bottom:6px;">
+            <div style="font-size:0.8em; color:gray;">${c.userName}</div>
+            <div>${c.text}</div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">${c.places.map(p => `<span style="background:#f0ebe0; padding:2px 6px; border-radius:6px; font-size:0.7em;">${p.name}</span>`).join('')}</div>
+        </div>
+    `).join('');
+}
+function renderMiddle() {
+    const { highFreq, all } = aggregatePlaces();
+    const filtered = currentFilter==='all'?all:all.filter(p=>p.type===currentFilter);
+    const highF = currentFilter==='all'?highFreq:highFreq.filter(p=>p.type===currentFilter);
+    document.getElementById('highFreqSection').style.display = highF.length?'block':'none';
+    document.getElementById('highFreqList').innerHTML = highF.map(p => `
+        <div class="place-card high-freq" onclick="togglePlaceSelect('${p.name}')">
+            <strong>${p.name}</strong> <span style="color:var(--gold);">🔥${p.count}</span>
+            <div style="font-size:0.7em;">${p.users.join('、')}</div>
+        </div>
+    `).join('');
+    const normal = filtered.filter(p=>!highF.includes(p));
+    document.getElementById('allPlacesList').innerHTML = normal.map(p => `
+        <div class="place-card" onclick="togglePlaceSelect('${p.name}')">
+            <strong>${p.name}</strong> <span style="color:gray;">${p.count}次</span>
+        </div>
+    `).join('');
+}
+function renderRight() {
+    const room = getRoom();
+    const container = document.getElementById('itineraryDisplay');
+    if (!room?.itinerary) { container.innerHTML = '<div style="color:gray;text-align:center;">点击地点加入行程后生成</div>'; return; }
+    container.innerHTML = room.itinerary.map(day => `
+        <div class="day-block"><strong>第${day.day}天</strong>${day.places.map(p => `<div>· ${p.name} (${p.type})</div>`).join('')}</div>
+    `).join('');
+}
+function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+
+// 拖拽上传支持
 document.addEventListener('DOMContentLoaded', () => {
     const upload = document.getElementById('imageUploadArea');
     if (upload) {
@@ -386,6 +528,7 @@ if (appData.activeRoomCode && appData.rooms[appData.activeRoomCode]) {
     refreshAll();
 } else {
     refreshAll();
+    toast('点击✨创建开始规划旅行');
 }
 </script>
 </body>
