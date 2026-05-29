@@ -192,20 +192,33 @@ function loadLocal() {
 async function updateWeather() {
     const room = getRoom();
     const badge = document.getElementById('weatherBadge');
-    if (!room || !room.destination) { badge.style.display='none'; return; }
+    if (!room || !room.destination) {
+        badge.style.display = 'none';
+        return;
+    }
     try {
-        const resp = await fetch(`https://wttr.in/${room.destination}?format=%C+%t`);
-        badge.textContent = (await resp.text()).trim();
+        // 使用 format=3 获取单行文本 (例如: "Beijing: ☀️ +25°C")
+        const resp = await fetch(`https://wttr.in/${encodeURIComponent(room.destination)}?format=3`);
+        if (!resp.ok) throw new Error('Weather fetch failed');
+        let text = await resp.text();
+        // 去除可能的前导冒号和多余空格
+        text = text.replace(/^[:\s]+/, '').trim();
+        // 如果返回内容过长或包含HTML，做简单过滤
+        if (text.length > 80 || text.includes('<')) {
+            // 如果返回的是HTML，尝试提取纯文本
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = text;
+            text = tempDiv.textContent || tempDiv.innerText || '';
+            text = text.trim().replace(/\s+/g, ' ');
+            if (text.length > 80) text = text.substring(0, 80) + '...';
+        }
+        badge.textContent = text || '天气数据异常';
         badge.style.display = 'inline-block';
-    } catch(e) { badge.style.display='none'; }
+    } catch (e) {
+        console.warn('天气获取失败', e);
+        badge.style.display = 'none';
+    }
 }
-function updateCountdown() {
-    const room = getRoom(); if (!room) return;
-    room.startDate = document.getElementById('startDate').value;
-    room.days = parseInt(document.getElementById('daysSelect').value);
-    saveLocal(); refreshAll();
-}
-
 // ========== 房间操作 ==========
 function createRoom() {
     const name = document.getElementById('roomName').value.trim();
