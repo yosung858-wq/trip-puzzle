@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🧩 旅行拼图 · 豆包AI协作</title>
+    <title>🧩 旅行拼图 · 一起计划旅行吧</title>
     <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f5f3f0; --surface: #fffdf9; --border: #e8e0d5; --text: #3d3226; --accent: #e8784a; --gold: #c9a65b; --radius: 12px; --font: 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
@@ -230,17 +230,63 @@ function handleImageUpload(e) {
 // ========== AI 提取（豆包/OpenAI兼容） ==========
 async function extractWithAI(text) {
     const { apiKey, baseUrl, model } = appData.ai;
-    if (!apiKey || !baseUrl || !model) return null;
+    if (!apiKey || !baseUrl) return null; // 没有密钥就不调用
+
+    const requestBody = {
+        messages: [{
+            role: 'user',
+            content: `你是一个旅行攻略提取助手。请从以下文本中提取所有提到的餐厅、景点和住宿，并以 JSON 数组形式返回，每个对象包含 name (地点名称)、type (类型：restaurant/attraction/accommodation)、reason (简短推荐理由)。\n\n要求：只输出 JSON 数组，不要任何解释、标记或额外文字。\n\n文本：${text}`
+        }],
+        temperature: 0.1,
+        max_tokens: 1024
+    };
+    // 如果用户填写了 model 就传，否则不传（很多服务不强制需要）
+    if (model) requestBody.model = model;
+
     try {
         const resp = await fetch(`${baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-            method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${apiKey}` },
-            body: JSON.stringify({ model, messages: [{ role:'user', content: `从以下旅行内容提取餐厅、景点、住宿，返回JSON数组，每个元素{name,type,reason}。只返回JSON数组。\n内容：${text}` }], temperature:0.2 })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(requestBody)
         });
         const data = await resp.json();
-        const content = data.choices[0].message.content;
-        const match = content.match(/\[.*\]/s);
-        return match ? JSON.parse(match[0]) : null;
-    } catch(e) { return null; }
+        if (!data.choices || !data.choices[0]?.message?.content) {
+            throw new Error('API 返回格式异常');
+        }
+        let content = data.choices[0].message.content.trim();
+
+        // 尝试多种方式提取 JSON
+        let places = null;
+        // 方式1：直接匹配 [...]
+        const arrayMatch = content.match(/\[[\s\S]*?\]/);
+        if (arrayMatch) {
+            try { places = JSON.parse(arrayMatch[0]); } catch(e) {}
+        }
+        // 方式2：如果方式1失败，尝试匹配 {...} 并包装成数组
+        if (!places) {
+            const objMatch = content.match(/\{[\s\S]*?\}/g);
+            if (objMatch) {
+                try { places = objMatch.map(s => JSON.parse(s)); } catch(e) {}
+            }
+        }
+        // 方式3：尝试将整个内容当作 JSON 解析
+        if (!places) {
+            try { places = JSON.parse(content); if (!Array.isArray(places)) places = [places]; } catch(e) {}
+        }
+        // 如果仍然无法解析，返回错误信息
+        if (!places) {
+            throw new Error('无法从 AI 回复中提取地点，请检查模型设置或重试');
+        }
+        return places;
+    } catch (e) {
+        console.error('AI 提取失败：', e);
+        // 返回 null 触发模拟提取，但我们可以在这里直接提示
+        document.getElementById('extractStatus').textContent = '❌ AI 调用失败：' + e.message;
+        return null;
+    }
 }
 function simulateExtract(text) {
     const known = [
