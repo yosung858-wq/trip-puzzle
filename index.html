@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🧩 旅行拼图 · 豆包AI在线协作</title>
+    <title>🧩 旅行拼图 · 豆包AI协作</title>
     <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f5f3f0; --surface: #fffdf9; --border: #e8e0d5; --text: #3d3226; --accent: #e8784a; --gold: #c9a65b; --radius: 12px; --font: 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
@@ -53,7 +53,6 @@
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="importRoom(event)">
 
 <div class="main-container">
-    <!-- 左栏：内容收集 -->
     <div class="panel" id="panelLeft">
         <div class="panel-header">📝 内容收集</div>
         <div class="panel-body">
@@ -78,7 +77,6 @@
             <div id="contentsList" style="margin-top:8px;"></div>
         </div>
     </div>
-    <!-- 中栏：地点聚合 -->
     <div class="panel" id="panelMid">
         <div class="panel-header">📍 地点聚合</div>
         <div class="panel-body">
@@ -92,7 +90,6 @@
             <div><strong>📋 全部地点</strong><div id="allPlacesList"></div></div>
         </div>
     </div>
-    <!-- 右栏：行程计划 -->
     <div class="panel" id="panelRight">
         <div class="panel-header">🗓️ 行程 & 后记</div>
         <div class="panel-body">
@@ -113,26 +110,18 @@
     <button class="btn btn-sm" onclick="document.getElementById('panelRight').scrollIntoView({behavior:'smooth'})">🗓️ 行程</button>
 </div>
 
-<!-- 弹窗 -->
 <div class="modal-overlay" id="createModal" style="display:none;"><div class="modal"><h3>创建房间</h3><input id="roomName" placeholder="房间名称"><input id="destCity" placeholder="目的地城市（选填）"><button class="btn btn-primary" onclick="createRoom()">创建</button><button class="btn" onclick="closeModal('createModal')">取消</button></div></div>
 <div class="modal-overlay" id="joinModal" style="display:none;"><div class="modal"><h3>加入房间</h3><input id="joinCode" placeholder="分享码"><button class="btn btn-primary" onclick="joinRoom()">加入</button><button class="btn" onclick="closeModal('joinModal')">取消</button></div></div>
 <div class="modal-overlay" id="archiveModal" style="display:none;"><div class="modal"><h3>📦 档案馆</h3><div id="archiveList"></div><button class="btn" onclick="closeModal('archiveModal')">关闭</button></div></div>
-<div class="modal-overlay" id="aiSettingsModal" style="display:none;"><div class="modal"><h3>🤖 豆包AI设置</h3><p style="font-size:0.8em;">请填入火山引擎豆包模型信息</p><input id="aiApiKey" placeholder="API Key (ark-...)" type="password"><input id="aiBaseUrl" placeholder="接口地址 (https://ark.cn-beijing.volces.com/api/v3)"><input id="aiModel" placeholder="推理接入点ID (ep-xxxx...）"><button class="btn btn-primary" onclick="saveAISettings()">保存</button><button class="btn" onclick="closeModal('aiSettingsModal')">取消</button></div></div>
+<div class="modal-overlay" id="aiSettingsModal" style="display:none;"><div class="modal"><h3>🤖 豆包AI设置</h3><p style="font-size:0.8em;">API Key 已预置，请填写模型接入点 ID</p><input id="aiModel" placeholder="推理接入点ID (如 ep-2024xxxxxxxx)"><button class="btn btn-primary" onclick="saveAISettings()">保存</button><button class="btn" onclick="closeModal('aiSettingsModal')">取消</button></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ========== 预置豆包配置（API Key 和地址已填入，模型ID需在页面设置中补充） ==========
-const DEFAULT_AI = {
+// ========== 预置豆包配置（API Key 已写入，别人打开就能用） ==========
+const BUILTIN_AI = {
     apiKey: 'ark-4ffb0e3e-50a8-41d2-9382-1dfe52ebbbfb-c594b',
     baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-    model: ''  // 留空，用户需自行填写接入点ID
+    model: ''
 };
-
-// Supabase 配置（如需在线协作，替换为自己的信息）
-const SUPABASE_URL = '';  // 留空则仅本地存储
-const SUPABASE_KEY = '';
-let supabase = null;
-try { if (SUPABASE_URL) supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) {}
 
 // 全局状态
 let appData = {
@@ -142,38 +131,25 @@ let appData = {
     nextUserId: 2,
     rooms: {},
     archives: {},
-    ai: { ...DEFAULT_AI }
+    ai: { ...BUILTIN_AI }
 };
 let currentFilter = 'all';
 let inputMode = 'text';
 
-// 加载持久化数据
+// 持久化
 function loadAll() {
     const saved = localStorage.getItem('trip_puzzle');
     if (saved) { try { appData = { ...appData, ...JSON.parse(saved) }; } catch(e) {} }
     const code = new URLSearchParams(window.location.search).get('code');
     if (code && appData.rooms[code]) appData.activeRoomCode = code;
     const ai = localStorage.getItem('trip_ai');
-    if (ai) { try { appData.ai = { ...DEFAULT_AI, ...JSON.parse(ai) }; } catch(e) {} }
+    if (ai) { try { appData.ai = { ...BUILTIN_AI, ...JSON.parse(ai) }; } catch(e) {} }
 }
 function saveLocal() { localStorage.setItem('trip_puzzle', JSON.stringify(appData)); }
 function saveAi() { localStorage.setItem('trip_ai', JSON.stringify(appData.ai)); }
 
-// ========== 实时同步（可选） ==========
-async function syncRoom(room) { if (supabase) await supabase.from('rooms').upsert({ share_code: room.shareCode, data: room, updated_at: new Date() }); }
-async function subscribeRoom(code) {
-    if (!supabase) return;
-    supabase.channel(`room:${code}`).on('postgres_changes', { event:'*', schema:'public', table:'rooms', filter:`share_code=eq.${code}` }, payload => {
-        if (payload.new?.data) {
-            appData.rooms[code] = payload.new.data;
-            saveLocal();
-            if (appData.activeRoomCode === code) refreshAll();
-        }
-    }).subscribe();
-}
-
 // ========== 房间操作 ==========
-async function createRoom() {
+function createRoom() {
     const name = document.getElementById('roomName').value.trim();
     if (!name) return toast('请输入房间名称');
     const dest = document.getElementById('destCity').value.trim();
@@ -182,24 +158,15 @@ async function createRoom() {
     appData.rooms[code] = room;
     appData.activeRoomCode = code;
     saveLocal();
-    if (supabase) await syncRoom(room);
-    subscribeRoom(code);
     closeModal('createModal');
     refreshAll();
     toast('房间创建成功！分享码：'+code);
 }
-async function joinRoom() {
+function joinRoom() {
     const code = document.getElementById('joinCode').value.trim().toUpperCase();
-    if (!appData.rooms[code]) {
-        if (supabase) {
-            const { data } = await supabase.from('rooms').select('data').eq('share_code', code).single();
-            if (data) appData.rooms[code] = data.data;
-            else return toast('房间不存在');
-        } else return toast('房间不存在（离线模式，请对方导出文件发给你）');
-    }
+    if (!appData.rooms[code]) return toast('房间不存在，请先由对方导出文件发给你');
     appData.activeRoomCode = code;
     saveLocal();
-    subscribeRoom(code);
     closeModal('joinModal');
     refreshAll();
     toast('已加入房间');
@@ -211,7 +178,6 @@ function finishTrip() {
     delete appData.rooms[room.shareCode];
     appData.activeRoomCode = null;
     saveLocal();
-    if (supabase) supabase.from('rooms').delete().eq('share_code', room.shareCode);
     refreshAll();
     toast('旅行已存档');
 }
@@ -219,7 +185,12 @@ function getRoom() { return appData.activeRoomCode ? appData.rooms[appData.activ
 function getUser() { return appData.users[appData.activeUserId]; }
 
 // ========== 成员管理 ==========
-function switchUser() { const ids = Object.keys(appData.users); const cur = ids.indexOf(appData.activeUserId); appData.activeUserId = ids[(cur+1)%ids.length]; refreshAll(); }
+function switchUser() {
+    const ids = Object.keys(appData.users);
+    const cur = ids.indexOf(appData.activeUserId);
+    appData.activeUserId = ids[(cur+1)%ids.length];
+    refreshAll();
+}
 function addMember() {
     const name = document.getElementById('userName').value.trim() || '成员'+appData.nextUserId;
     const city = document.getElementById('userCity').value.trim() || '未知';
@@ -227,7 +198,7 @@ function addMember() {
     appData.users[id] = { name, city };
     appData.activeUserId = id;
     const room = getRoom();
-    if (room) { room.memberCities[id] = city; saveLocal(); if (supabase) syncRoom(room); }
+    if (room) { room.memberCities[id] = city; saveLocal(); }
     refreshAll(); toast('已添加'+name);
 }
 
@@ -278,8 +249,6 @@ function simulateExtract(text) {
         { kw:['花间堂'], name:'花间堂酒店', type:'accommodation', reason:'特色酒店' },
         { kw:['长城','八达岭'], name:'八达岭长城', type:'attraction', reason:'世界遗产' },
         { kw:['南锣鼓巷'], name:'南锣鼓巷', type:'attraction', reason:'胡同文化' },
-        { kw:['火锅','重庆火锅'], name:'重庆火锅', type:'restaurant', reason:'地道美食' },
-        { kw:['迪士尼','上海迪士尼'], name:'上海迪士尼', type:'attraction', reason:'主题乐园' },
     ];
     return known.filter(p => p.kw.some(w => text.includes(w))).map(p => ({name:p.name, type:p.type, reason:p.reason}));
 }
@@ -311,7 +280,7 @@ async function submitContent() {
     });
     if (inputMode === 'text') document.getElementById('contentText').value = '';
     else { document.getElementById('imagePreview').style.display = 'none'; document.getElementById('imageInput').value = ''; }
-    saveLocal(); if (supabase) syncRoom(room);
+    saveLocal();
     refreshAll();
     document.getElementById('extractStatus').textContent = `✅ 提取到 ${places.length} 个地点`;
     setTimeout(() => document.getElementById('extractStatus').textContent = '', 3000);
@@ -341,7 +310,7 @@ function togglePlaceSelect(name) {
     if (!room._selected) room._selected = [];
     const idx = room._selected.indexOf(name);
     if (idx >= 0) room._selected.splice(idx,1); else room._selected.push(name);
-    saveLocal(); if (supabase) syncRoom(room);
+    saveLocal();
     renderMiddle(); renderRight();
 }
 function generateItinerary() {
@@ -357,7 +326,7 @@ function generateItinerary() {
     for (let d=0; d<days; d++) itinerary.push({ day:d+1, places:[] });
     chosen.forEach((p, i) => itinerary[i%days].places.push(p));
     room.itinerary = itinerary;
-    saveLocal(); if (supabase) syncRoom(room);
+    saveLocal();
     refreshAll();
 }
 
@@ -386,11 +355,11 @@ function updateCountdown() {
     const room = getRoom(); if (!room) return;
     room.startDate = document.getElementById('startDate').value;
     room.days = parseInt(document.getElementById('daysSelect').value);
-    saveLocal(); if (supabase) syncRoom(room);
+    saveLocal();
     refreshAll();
 }
 
-// ========== 导出/导入 ==========
+// ========== 导出/导入协作 ==========
 function exportRoom() {
     const room = getRoom(); if (!room) return toast('没有打开的房间');
     const blob = new Blob([JSON.stringify(room, null, 2)], {type:'application/json'});
@@ -398,6 +367,7 @@ function exportRoom() {
     a.href = URL.createObjectURL(blob);
     a.download = `旅行拼图_${room.shareCode}.json`;
     a.click();
+    toast('已导出，发送给朋友吧');
 }
 function importRoom(e) {
     const file = e.target.files[0]; if (!file) return;
@@ -408,7 +378,7 @@ function importRoom(e) {
             if (!room.shareCode) throw new Error('无效文件');
             appData.rooms[room.shareCode] = room;
             appData.activeRoomCode = room.shareCode;
-            saveLocal(); subscribeRoom(room.shareCode); refreshAll(); toast('房间导入成功');
+            saveLocal(); refreshAll(); toast('房间导入成功');
         } catch(ex) { toast('无效的房间文件'); }
     };
     reader.readAsText(file);
@@ -430,18 +400,14 @@ function loadArchive(code) {
     if (room) { appData.activeRoomCode = code; appData.rooms[code] = room; closeModal('archiveModal'); refreshAll(); toast('查看存档：'+room.name); }
 }
 function showAISettings() {
-    document.getElementById('aiApiKey').value = appData.ai.apiKey;
-    document.getElementById('aiBaseUrl').value = appData.ai.baseUrl;
     document.getElementById('aiModel').value = appData.ai.model;
     document.getElementById('aiSettingsModal').style.display='flex';
 }
 function saveAISettings() {
-    appData.ai.apiKey = document.getElementById('aiApiKey').value.trim();
-    appData.ai.baseUrl = document.getElementById('aiBaseUrl').value.trim();
     appData.ai.model = document.getElementById('aiModel').value.trim();
     saveAi();
     closeModal('aiSettingsModal');
-    toast(appData.ai.model ? '豆包AI已配置，提取时将使用模型' : '已保存AI设置（请填写模型接入点ID）');
+    toast(appData.ai.model ? '豆包AI已配置，提取时将使用模型' : '已保存（请填写模型接入点ID）');
 }
 function closeModal(id) { document.getElementById(id).style.display='none'; }
 function copyShareCode() { const room = getRoom(); if (room) navigator.clipboard.writeText(room.shareCode).then(() => toast('分享码已复制')); }
@@ -504,7 +470,7 @@ function renderRight() {
 }
 function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
-// 拖拽上传支持
+// 拖拽上传
 document.addEventListener('DOMContentLoaded', () => {
     const upload = document.getElementById('imageUploadArea');
     if (upload) {
@@ -524,7 +490,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // 启动
 loadAll();
 if (appData.activeRoomCode && appData.rooms[appData.activeRoomCode]) {
-    if (supabase) subscribeRoom(appData.activeRoomCode);
     refreshAll();
 } else {
     refreshAll();
