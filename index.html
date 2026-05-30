@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>旅行拼图 · 多人协作版（Supabase）</title>
+<title>旅行拼图 · 多人协作（Supabase）</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -191,7 +191,7 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 <div class="topbar">
   <div class="logo">旅行<span>拼图</span></div>
   <div class="topbar-right">
-    <div class="room-badge" id="room-badge" onclick="showRoomInfo()">⚙️ 房间</div>
+    <div class="room-badge" id="room-badge" onclick="window.showRoomInfo()">⚙️ 房间</div>
     <div class="avatar-row" id="avatar-row"></div>
   </div>
 </div>
@@ -207,9 +207,9 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 </div>
 
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="gotoTab(0,this)">🗺 出发规划</button>
-  <button class="tab-btn" onclick="gotoTab(1,this)">📌 攻略收集</button>
-  <button class="tab-btn" onclick="gotoTab(2,this)">📅 行程计划 · 后记</button>
+  <button class="tab-btn active" onclick="window.gotoTab(0,this)">🗺 出发规划</button>
+  <button class="tab-btn" onclick="window.gotoTab(1,this)">📌 攻略收集</button>
+  <button class="tab-btn" onclick="window.gotoTab(2,this)">📅 行程计划 · 后记</button>
 </div>
 
 <!-- PAGE 0: 出发规划 -->
@@ -221,8 +221,8 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
         <div class="sec-subtitle">输入各自城市，AI 推荐大家都合适的目的地</div>
         <div class="members-list" id="members-list"></div>
         <div class="btn-row">
-          <button class="btn-outline" onclick="addMember()">＋ 添加成员</button>
-          <button class="btn-primary" id="btn-rec" onclick="recDests()">✨ AI 推荐目的地</button>
+          <button class="btn-outline" onclick="window.addMember()">＋ 添加成员</button>
+          <button class="btn-primary" id="btn-rec" onclick="window.recDests()">✨ AI 推荐目的地</button>
         </div>
         <div id="rec-container"></div>
       </div>
@@ -230,15 +230,15 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
         <div class="sec-title">📅 出行日期</div>
         <div class="sec-subtitle">选定日期，开启倒计时</div>
         <div class="date-row">
-          <input type="date" class="date-input" id="dep-date" onchange="onDateChange()"/>
+          <input type="date" class="date-input" id="dep-date" onchange="window.onDateChange()"/>
           <span style="font-size:12px;color:var(--ink-muted);">至</span>
-          <input type="date" class="date-input" id="ret-date" onchange="onDateChange()"/>
+          <input type="date" class="date-input" id="ret-date" onchange="window.onDateChange()"/>
         </div>
         <div id="date-info" style="font-size:12px;color:var(--ink-muted);margin-bottom:14px;"></div>
         <div class="sec-title" style="margin-bottom:6px;">🎯 目标城市</div>
         <div class="target-row">
           <input class="city-input" id="target-city" placeholder="输入目标城市，如：成都" style="max-width:180px;"/>
-          <button class="btn-primary" onclick="fetchAll()" id="btn-fetch">查询天气 &amp; 交通</button>
+          <button class="btn-primary" onclick="window.fetchAll()" id="btn-fetch">查询天气 &amp; 交通</button>
         </div>
       </div>
       <div class="card-section">
@@ -266,22 +266,22 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
           <select class="sm-input" id="c-plat" style="width:95px;flex:none;"><option>小红书</option><option>抖音</option><option>微博</option><option>大众点评</option><option>其他</option></select>
         </div>
         <div class="src-tabs">
-          <button class="src-tab active" onclick="cTab('text',this)">📝 文字</button>
-          <button class="src-tab" onclick="cTab('img',this)">🖼 截图</button>
+          <button class="src-tab active" onclick="window.cTab('text',this)">📝 文字</button>
+          <button class="src-tab" onclick="window.cTab('img',this)">🖼 截图</button>
         </div>
         <textarea class="ta" id="c-text" rows="5" placeholder="粘贴攻略内容…&#10;&#10;例：成都必吃！宽窄巷子龙抄手超绝…"></textarea>
-        <div class="upz" id="c-upz" onclick="document.getElementById('c-file').click()"><div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/></div>
-        <button class="btn-ext" id="btn-ext" onclick="extract()">✨ AI 提取地点</button>
+        <div class="upz" id="c-upz" onclick="document.getElementById('c-file').click()"><div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="window.handleImg(event)"/></div>
+        <button class="btn-ext" id="btn-ext" onclick="window.extract()">✨ AI 提取地点</button>
       </div>
       <div class="p-scroll" id="cards-scroll"></div>
     </div>
     <div class="main-area">
-      <div class="main-tb"><span class="dest-badge" id="main-badge">成都</span><button class="chip ca" id="cp-a" onclick="filt('all')">全部</button><button class="chip" id="cp-r" onclick="filt('restaurant')">🍜 餐厅</button><button class="chip" id="cp-t" onclick="filt('attraction')">🏛 景点</button><button class="chip" id="cp-h" onclick="filt('hotel')">🏨 住宿</button></div>
+      <div class="main-tb"><span class="dest-badge" id="main-badge">成都</span><button class="chip ca" id="cp-a" onclick="window.filt('all')">全部</button><button class="chip" id="cp-r" onclick="window.filt('restaurant')">🍜 餐厅</button><button class="chip" id="cp-t" onclick="window.filt('attraction')">🏛 景点</button><button class="chip" id="cp-h" onclick="window.filt('hotel')">🏨 住宿</button></div>
       <div class="main-scroll" id="main-scroll"><div class="empty-st" id="pl-empty"><span class="ee">🗺️</span>在左侧添加攻略，AI 自动提取地点</div><div id="pl-container"></div></div>
     </div>
     <div class="sp sp-r">
       <div class="ph"><div class="ph-title">行程候选</div><div class="ph-sub">从地点列表加入</div></div>
-      <div class="plan-sub"><div class="days-row"><input class="days-in" id="c-days" type="number" min="1" max="14" value="3"/><span style="font-size:11px;color:var(--ink-muted);">天行程</span></div><button class="btn-gen" id="btn-gen" onclick="genPlan()" disabled>✨ AI 生成行程</button></div>
+      <div class="plan-sub"><div class="days-row"><input class="days-in" id="c-days" type="number" min="1" max="14" value="3"/><span style="font-size:11px;color:var(--ink-muted);">天行程</span></div><button class="btn-gen" id="btn-gen" onclick="window.genPlan()" disabled>✨ AI 生成行程</button></div>
       <div class="p-scroll" id="mini-plan" style="gap:0;"><div class="plan-empty" id="mini-empty">从地点列表<br>点「+ 加入行程」<br>再 AI 智能排程 ✨</div><div id="mini-plan-items"></div></div>
     </div>
   </div>
@@ -296,12 +296,12 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
         <div class="journal-title">📝 后记 · 旅行存档</div>
         <textarea id="journal-text" class="journal-text" rows="5" placeholder="写写旅行感悟、花费总结、推荐或避坑..."></textarea>
         <div class="journal-images" id="journal-images"></div>
-        <div class="journal-upload" onclick="document.getElementById('journal-file').click()">📸 上传照片（最多9张）<input type="file" id="journal-file" style="display:none;" accept="image/*" multiple onchange="handleJournalImages(event)"/></div>
+        <div class="journal-upload" onclick="document.getElementById('journal-file').click()">📸 上传照片（最多9张）<input type="file" id="journal-file" style="display:none;" accept="image/*" multiple onchange="window.handleJournalImages(event)"/></div>
         <div class="journal-buttons">
-          <button class="btn-primary" onclick="saveJournal()">💾 保存后记</button>
-          <button class="btn-outline" onclick="exportJournal()">📎 导出存档（JSON）</button>
-          <button class="btn-outline" onclick="importJournal()">📂 导入存档</button>
-          <input type="file" id="import-journal-file" style="display:none;" accept=".json" onchange="loadJournalFromFile(event)"/>
+          <button class="btn-primary" onclick="window.saveJournal()">💾 保存后记</button>
+          <button class="btn-outline" onclick="window.exportJournal()">📎 导出存档（JSON）</button>
+          <button class="btn-outline" onclick="window.importJournal()">📂 导入存档</button>
+          <input type="file" id="import-journal-file" style="display:none;" accept=".json" onchange="window.loadJournalFromFile(event)"/>
         </div>
       </div>
     </div>
@@ -309,17 +309,15 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="overlay" id="inv-overlay" onclick="if(event.target===this)hideInv()">
-  <div class="modal"><h2>邀请朋友 🗺️</h2><p>把房间码发给朋友，他们加入后可一起规划！</p><div class="code-disp" id="roomCode">TRIP · 2847</div><div class="modal-btns"><button class="btn-copy" onclick="copyCode()">复制房间码</button><button class="btn-cls" onclick="hideInv()">关闭</button></div></div>
+<div class="overlay" id="inv-overlay" onclick="if(event.target===this)window.hideInv()">
+  <div class="modal"><h2>邀请朋友 🗺️</h2><p>把房间码发给朋友，他们加入后可一起规划！</p><div class="code-disp" id="roomCode">TRIP · 2847</div><div class="modal-btns"><button class="btn-copy" onclick="window.copyCode()">复制房间码</button><button class="btn-cls" onclick="window.hideInv()">关闭</button></div></div>
 </div>
 
 <script>
 // ======================== Supabase 配置 ========================
-// 请将下面的 URL 替换成你自己的 Supabase 项目 URL（格式：https://xxxxx.supabase.co）
-const SUPABASE_URL = 'https://wysbkblkuznbfmuyhzgc.supabase.co';  // 🔴 这里改成你的真实 URL
-const SUPABASE_ANON_KEY = 'sb_publishable_C3LaoqqseHc3oPlPxDqhlw_sY7tMfH1';  // 你提供的 key
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://wysbkblkuznbfmuyhzgc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_C3LaoqqseHc3oPlPxDqhlw_sY7tMfH1';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ======================== 全局状态 ========================
 let currentRoomId = null;
@@ -343,7 +341,7 @@ function escapeHtml(str) { if(!str) return ''; return String(str).replace(/&/g,'
 function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
 // ======================== 房间与数据持久化 ========================
-function showRoomModal() {
+window.showRoomModal = function() {
   const modalHtml = `
     <div id="room-modal" class="auth-overlay">
       <div class="auth-card">
@@ -366,7 +364,7 @@ function closeRoomModal() { document.getElementById('room-modal')?.remove(); }
 async function createRoom() {
   const roomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
   const newRoom = { code: roomCode, data: getDefaultRoomData(), created_at: new Date() };
-  const { data, error } = await supabase.from('travel_rooms').insert([newRoom]).select().single();
+  const { data, error } = await supabaseClient.from('travel_rooms').insert([newRoom]).select().single();
   if (error) { toast('创建失败: ' + error.message); return; }
   currentRoomId = data.id;
   currentRoomCode = data.code;
@@ -380,7 +378,7 @@ async function createRoom() {
 async function joinRoom() {
   const code = document.getElementById('room-code-input').value.trim().toUpperCase();
   if (!code) { toast('请输入房间码'); return; }
-  const { data, error } = await supabase.from('travel_rooms').select('*').eq('code', code).single();
+  const { data, error } = await supabaseClient.from('travel_rooms').select('*').eq('code', code).single();
   if (error || !data) { toast('房间不存在'); return; }
   currentRoomId = data.id;
   currentRoomCode = data.code;
@@ -443,40 +441,38 @@ async function persistRoomData() {
     depDate: document.getElementById('dep-date').value,
     retDate: document.getElementById('ret-date').value
   };
-  const { error } = await supabase.from('travel_rooms').update({ data: payload }).eq('id', currentRoomId);
+  const { error } = await supabaseClient.from('travel_rooms').update({ data: payload }).eq('id', currentRoomId);
   if (error) console.error('保存失败', error);
 }
 
 function startRealtimeSubscription() {
   if (unsubscribeRealtime) unsubscribeRealtime();
-  const subscription = supabase
+  const subscription = supabaseClient
     .channel(`room-${currentRoomId}`)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'travel_rooms', filter: `id=eq.${currentRoomId}` }, (payload) => {
       const newData = payload.new.data;
-      // 避免重复刷新自己发出的更新
       if (JSON.stringify(newData) !== JSON.stringify({ membersData, places, planItems, targetCity, journal, depDate: document.getElementById('dep-date').value, retDate: document.getElementById('ret-date').value })) {
         loadRoomData(payload.new);
         toast('房间数据已更新');
       }
     })
     .subscribe();
-  unsubscribeRealtime = () => supabase.removeChannel(subscription);
+  unsubscribeRealtime = () => supabaseClient.removeChannel(subscription);
 }
 
-// ======================== 以下为原有业务逻辑（所有修改点已加入 persistRoomData） ========================
-
+// ======================== UI 渲染与业务逻辑 ========================
 function renderMembersList() {
   const container = document.getElementById('members-list');
   container.innerHTML = '';
   membersData.forEach((m, idx) => {
     const row = document.createElement('div'); row.className = 'member-row';
-    row.innerHTML = `<div class="member-dot" style="background:${MC[idx % MC.length]}"></div><input class="sm-input" placeholder="名字" value="${escapeHtml(m.name)}" style="width:60px;" onchange="updateMember(${idx}, 'name', this.value)"><input class="city-input" placeholder="出发城市" value="${escapeHtml(m.city)}" onchange="updateMember(${idx}, 'city', this.value)"><button onclick="removeMember(${idx})" style="background:none;border:none;cursor:pointer;">×</button>`;
+    row.innerHTML = `<div class="member-dot" style="background:${MC[idx % MC.length]}"></div><input class="sm-input" placeholder="名字" value="${escapeHtml(m.name)}" style="width:60px;" onchange="window.updateMember(${idx}, 'name', this.value)"><input class="city-input" placeholder="出发城市" value="${escapeHtml(m.city)}" onchange="window.updateMember(${idx}, 'city', this.value)"><button onclick="window.removeMember(${idx})" style="background:none;border:none;cursor:pointer;">×</button>`;
     container.appendChild(row);
   });
 }
-function updateMember(idx, field, val) { if (field === 'name') membersData[idx].name = val; else membersData[idx].city = val; persistRoomData(); }
-function removeMember(idx) { membersData.splice(idx,1); renderMembersList(); persistRoomData(); }
-function addMember() { membersData.push({name:`成员${membersData.length+1}`,city:''}); renderMembersList(); persistRoomData(); }
+window.updateMember = function(idx, field, val) { if (field === 'name') membersData[idx].name = val; else membersData[idx].city = val; persistRoomData(); };
+window.removeMember = function(idx) { membersData.splice(idx,1); renderMembersList(); persistRoomData(); };
+window.addMember = function() { membersData.push({name:`成员${membersData.length+1}`,city:''}); renderMembersList(); persistRoomData(); };
 
 function renderPlaces() {
   const container = document.getElementById('pl-container'); const emptyDiv = document.getElementById('pl-empty');
@@ -492,14 +488,14 @@ function renderPlaces() {
 }
 function placeCardHtml(p) {
   const col = TC[p.type] || '#888'; const lbl = TL[p.type] || p.type;
-  return `<div class="pl-card ${p.inPlan ? 'inp' : ''}"><div><span class="pl-freq">${p.mentions.length}</span><span class="pl-fl"> 人推荐</span></div><div class="pl-name">${escapeHtml(p.name)}</div><span class="pl-badge" style="background:${col}22;color:${col}">${lbl}</span><div class="pl-who">by ${p.mentions.map(escapeHtml).join('、')}</div><div class="pl-note">${escapeHtml(p.note)}</div><button class="btn-ap" data-name="${escapeHtml(p.name)}" onclick="togglePlan('${escapeHtml(p.name).replace(/'/g,"\\'")}')">${p.inPlan ? '✓ 已加入' : '+ 加入行程'}</button></div>`;
+  return `<div class="pl-card ${p.inPlan ? 'inp' : ''}"><div><span class="pl-freq">${p.mentions.length}</span><span class="pl-fl"> 人推荐</span></div><div class="pl-name">${escapeHtml(p.name)}</div><span class="pl-badge" style="background:${col}22;color:${col}">${lbl}</span><div class="pl-who">by ${p.mentions.map(escapeHtml).join('、')}</div><div class="pl-note">${escapeHtml(p.note)}</div><button class="btn-ap" data-name="${escapeHtml(p.name)}" onclick="window.togglePlan('${escapeHtml(p.name).replace(/'/g,"\\'")}')">${p.inPlan ? '✓ 已加入' : '+ 加入行程'}</button></div>`;
 }
-function togglePlan(name) { if(places[name]) { places[name].inPlan = !places[name].inPlan; renderPlaces(); updateGenBtn(); persistRoomData(); toast(`${name} ${places[name].inPlan ? '已加入行程' : '已移除'}`); } }
+window.togglePlan = function(name) { if(places[name]) { places[name].inPlan = !places[name].inPlan; renderPlaces(); updateGenBtn(); persistRoomData(); toast(`${name} ${places[name].inPlan ? '已加入行程' : '已移除'}`); } };
 function updateGenBtn() { const cnt = Object.values(places).filter(p => p.inPlan).length; const btn = document.getElementById('btn-gen'); btn.disabled = (cnt === 0); btn.textContent = cnt ? `✨ AI 生成行程（${cnt}个地点）` : '✨ AI 生成行程'; }
 let curFilt = 'all';
-function filt(type) { curFilt = type; document.querySelectorAll('[id^="cp-"]').forEach(c=>c.className='chip'); const map={all:'ca',restaurant:'cr',attraction:'cat',hotel:'ch'}; const el = document.getElementById('cp-'+(type==='all'?'a':type[0])); if(el) el.classList.add(map[type]||'ca'); renderPlaces(); }
+window.filt = function(type) { curFilt = type; document.querySelectorAll('[id^="cp-"]').forEach(c=>c.className='chip'); const map={all:'ca',restaurant:'cr',attraction:'cat',hotel:'ch'}; const el = document.getElementById('cp-'+(type==='all'?'a':type[0])); if(el) el.classList.add(map[type]||'ca'); renderPlaces(); };
 
-// 地点提取（简单后缀匹配）
+// 地点提取
 function smartExtract(text, author, platform) {
   const suffixMap = [
     { suffixes: ['博物馆','纪念馆','陈列馆','科技馆','艺术馆'], type: 'attraction' },
@@ -545,8 +541,8 @@ function smartExtract(text, author, platform) {
   return { places: unique, summary: text.slice(0, 60) };
 }
 let windowImgData = null;
-function handleImg(ev) { const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=e=>{ windowImgData=e.target.result; document.getElementById('c-upz').innerHTML=`<img src="${windowImgData}" style="max-height:80px;border-radius:5px;"><div style="margin-top:4px;">点击重新选择</div><input type="file" id="c-file" style="display:none;" onchange="handleImg(event)"/>`; }; reader.readAsDataURL(f); }
-function cTab(tab,btn){ document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const ta=document.getElementById('c-text'),uz=document.getElementById('c-upz'); if(tab==='img'){ ta.style.display='none'; uz.classList.add('show'); } else { ta.style.display=''; uz.classList.remove('show'); } }
+window.handleImg = function(ev) { const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=e=>{ windowImgData=e.target.result; document.getElementById('c-upz').innerHTML=`<img src="${windowImgData}" style="max-height:80px;border-radius:5px;"><div style="margin-top:4px;">点击重新选择</div><input type="file" id="c-file" style="display:none;" onchange="window.handleImg(event)"/>`; }; reader.readAsDataURL(f); };
+window.cTab = function(tab,btn){ document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const ta=document.getElementById('c-text'),uz=document.getElementById('c-upz'); if(tab==='img'){ ta.style.display='none'; uz.classList.add('show'); } else { ta.style.display=''; uz.classList.remove('show'); } };
 function addCardUI(card) {
   const div = document.createElement('div'); div.className = 'cc fi';
   const types = [...new Set((card.places || []).map(p => p.type))];
@@ -554,7 +550,7 @@ function addCardUI(card) {
   div.innerHTML = `<div class="cc-meta"><span class="cc-author">${escapeHtml(card.author)}</span><span class="cc-plat">${escapeHtml(card.platform)}</span><span class="cc-time">${card.time}</span></div>${imgHtml}<div class="cc-txt">${escapeHtml(card.text)}</div><div class="cc-tags">${types.map(t => `<span class="cc-tag t-${t.slice(0,3)}">${TL[t] || t}</span>`).join('')}${card.places.length ? `<span class="cc-tag">${card.places.length}处</span>` : ''}</div>`;
   document.getElementById('cards-scroll').prepend(div);
 }
-async function extract() {
+window.extract = async function() {
   const author = document.getElementById('c-name').value.trim() || '匿名';
   const platform = document.getElementById('c-plat').value;
   const text = document.getElementById('c-text').value.trim();
@@ -580,12 +576,12 @@ async function extract() {
   renderPlaces(); updateGenBtn(); persistRoomData();
   toast(`✨ 提取了 ${extracted.places.length} 个地点`);
   document.getElementById('c-text').value = ''; windowImgData = null;
-  document.getElementById('c-upz').innerHTML = `<div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/>`;
+  document.getElementById('c-upz').innerHTML = `<div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="window.handleImg(event)"/>`;
   btn.disabled = false; btn.textContent = '✨ AI 提取地点';
-}
+};
 
-// 推荐目的地（地理中心）
-async function recDests() {
+// 推荐目的地
+window.recDests = async function() {
   const cities = membersData.filter(m => m.city.trim()).map(m => m.city);
   if (!cities.length) { toast('请填写出发城市'); return; }
   const btn = document.getElementById('btn-rec'); btn.disabled = true; btn.textContent = '🤖 计算推荐中…';
@@ -620,18 +616,18 @@ async function recDests() {
     const withDist = hotCities.map(c => ({ ...c, dist: distance(centerLat, centerLon, c.lat, c.lon) }));
     withDist.sort((a,b) => a.dist - b.dist);
     const top3 = withDist.slice(0,3);
-    container.innerHTML = `<div class="dest-recs">${top3.map((d,i)=>`<div class="dest-rec-card" onclick="selectDest('${escapeHtml(d.name)}', this)"><span class="dest-rank">${i+1}</span><div class="dest-info"><div class="dest-name">${escapeHtml(d.name)}</div><div class="dest-why">${escapeHtml(d.reason)}</div><div class="dest-dist">✈️ 距中心约 ${Math.round(d.dist)} km</div><div class="dest-tags">${d.tags.map(t=>`<span class="dest-tag">${escapeHtml(t)}</span>`).join('')}</div></div><button class="dest-sel-btn">选择</button></div>`).join('')}</div>`;
+    container.innerHTML = `<div class="dest-recs">${top3.map((d,i)=>`<div class="dest-rec-card" onclick="window.selectDest('${escapeHtml(d.name)}', this)"><span class="dest-rank">${i+1}</span><div class="dest-info"><div class="dest-name">${escapeHtml(d.name)}</div><div class="dest-why">${escapeHtml(d.reason)}</div><div class="dest-dist">✈️ 距中心约 ${Math.round(d.dist)} km</div><div class="dest-tags">${d.tags.map(t=>`<span class="dest-tag">${escapeHtml(t)}</span>`).join('')}</div></div><button class="dest-sel-btn">选择</button></div>`).join('')}</div>`;
   } catch(e) { container.innerHTML = `<div style="color:var(--red);padding:8px;">推荐失败：${e.message}</div>`; }
   btn.disabled = false; btn.textContent = '✨ AI 推荐目的地';
-}
-function selectDest(name, cardElem) {
+};
+window.selectDest = function(name, cardElem) {
   document.querySelectorAll('.dest-rec-card').forEach(c=>c.classList.remove('selected'));
   cardElem.classList.add('selected');
   document.getElementById('target-city').value = name;
   document.getElementById('main-badge').textContent = name;
   toast(`已选 ${name} 为目的地`);
   onDateChange();
-}
+};
 
 // 天气与交通
 async function fetchWeather(city) {
@@ -680,7 +676,7 @@ async function fetchTransport(city) {
     tcDiv.innerHTML = routes.map(r=>`<div class="transport-block"><div class="from-label"><b>${escapeHtml(r.from)}</b> → <span style="color:var(--accent);">${escapeHtml(city)}</span></div><div class="tc-grid">${r.options.map(o=>`<div class="tc-card"><span class="tc-icon">${o.icon}</span><div class="tc-type">${o.type}</div><div class="tc-price">${o.price}</div><div class="tc-dur">⏱${o.duration}</div></div>`).join('')}</div></div>`).join('');
   } catch(e){ tcDiv.innerHTML='<div style="color:var(--red);">交通估算失败</div>'; }
 }
-async function fetchAll() {
+window.fetchAll = async function() {
   const dest = document.getElementById('target-city').value.trim();
   if(!dest){ toast('请输入目标城市'); return; }
   targetCity = dest; document.getElementById('main-badge').textContent = dest; document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
@@ -688,10 +684,10 @@ async function fetchAll() {
   const btn = document.getElementById('btn-fetch'); btn.disabled=true; btn.textContent='查询中…';
   await Promise.all([fetchWeather(dest), fetchTransport(dest)]);
   btn.disabled=false; btn.textContent='查询天气 & 交通'; persistRoomData();
-}
+};
 
 // 行程生成
-function genPlan() {
+window.genPlan = function() {
   const selected = Object.values(places).filter(p=>p.inPlan);
   if(!selected.length){ toast('请先加入地点'); return; }
   const days = parseInt(document.getElementById('c-days').value)||3;
@@ -718,14 +714,14 @@ function genPlan() {
   renderMiniPlan(); renderFullPlan();
   toast('行程生成完成 ✨');
   btn.disabled=false; updateGenBtn(); persistRoomData();
-}
+};
 function renderMiniPlan() {
   const container = document.getElementById('mini-plan-items'); const emptyDiv = document.getElementById('mini-empty');
   if(!planItems.length){ emptyDiv.style.display=''; container.innerHTML=''; return; }
   emptyDiv.style.display='none';
   const dest = document.getElementById('target-city').value;
   const w = weatherCache[dest];
-  container.innerHTML = planItems.map(day=>`<div class="day-blk fi"><div class="day-lbl">第${day.day}天 <span class="day-w">${w&&w.forecast&&w.forecast[day.day-1]?w.forecast[day.day-1].icon+' '+w.forecast[day.day-1].high+'/'+w.forecast[day.day-1].low:''}</span></div>${day.items.map(it=>`<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div><button class="it-rm" onclick="removePlanItem(${day.day-1},'${escapeHtml(it.name).replace(/'/g,"\\'")}')">×</button></div>`).join('')}</div>`).join('');
+  container.innerHTML = planItems.map(day=>`<div class="day-blk fi"><div class="day-lbl">第${day.day}天 <span class="day-w">${w&&w.forecast&&w.forecast[day.day-1]?w.forecast[day.day-1].icon+' '+w.forecast[day.day-1].high+'/'+w.forecast[day.day-1].low:''}</span></div>${day.items.map(it=>`<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div><button class="it-rm" onclick="window.removePlanItem(${day.day-1},'${escapeHtml(it.name).replace(/'/g,"\\'")}')">×</button></div>`).join('')}</div>`).join('');
 }
 function renderFullPlan() {
   const fp = document.getElementById('full-plan');
@@ -734,45 +730,45 @@ function renderFullPlan() {
   const w = weatherCache[dest];
   fp.innerHTML = `<div style="margin-bottom:18px;"><h2 style="font-family:\'Noto Serif SC\',serif;">📍 ${escapeHtml(dest)} 行程</h2></div><div class="full-plan-grid">${planItems.map(day=>`<div class="card-section"><div style="display:flex;gap:7px;margin-bottom:10px;"><span style="font-size:22px;color:var(--accent);">${day.day}</span><span>第 ${day.day} 天</span>${w&&w.forecast&&w.forecast[day.day-1]?`<span style="margin-left:auto;">${w.forecast[day.day-1].icon} ${w.forecast[day.day-1].high}/${w.forecast[day.day-1].low}</span>`:''}</div>${day.items.map(it=>`<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div></div>`).join('')}</div>`).join('')}</div>`;
 }
-function removePlanItem(dayIdx, name) {
+window.removePlanItem = function(dayIdx, name) {
   if(planItems[dayIdx]){ planItems[dayIdx].items = planItems[dayIdx].items.filter(i=>i.name!==name); if(!planItems[dayIdx].items.length) planItems.splice(dayIdx,1); for(let i=0;i<planItems.length;i++) planItems[i].day=i+1; renderMiniPlan(); renderFullPlan(); persistRoomData(); }
-}
+};
 
 // 后记与存档
-function saveJournal() { journal.text = document.getElementById('journal-text').value; renderJournalImages(); persistRoomData(); toast('后记已保存'); }
+window.saveJournal = function() { journal.text = document.getElementById('journal-text').value; renderJournalImages(); persistRoomData(); toast('后记已保存'); };
 function renderJournalImages() {
   const container = document.getElementById('journal-images');
   container.innerHTML = '';
   (journal.images || []).forEach((imgBase64, idx) => {
     const div = document.createElement('div'); div.className = 'journal-img-item';
-    div.innerHTML = `<img src="${imgBase64}"><button onclick="removeJournalImage(${idx})">×</button>`;
+    div.innerHTML = `<img src="${imgBase64}"><button onclick="window.removeJournalImage(${idx})">×</button>`;
     container.appendChild(div);
   });
 }
-function removeJournalImage(idx) { journal.images.splice(idx,1); renderJournalImages(); persistRoomData(); toast('已删除照片'); }
-function handleJournalImages(event) {
+window.removeJournalImage = function(idx) { journal.images.splice(idx,1); renderJournalImages(); persistRoomData(); toast('已删除照片'); };
+window.handleJournalImages = function(event) {
   const files = Array.from(event.target.files);
   const total = (journal.images || []).length + files.length;
   if(total > 9) { toast('最多上传9张照片'); return; }
   files.forEach(file => { const reader = new FileReader(); reader.onload = e => { journal.images.push(e.target.result); renderJournalImages(); persistRoomData(); }; reader.readAsDataURL(file); });
   document.getElementById('journal-file').value = '';
-}
+};
 function loadJournalUI() { document.getElementById('journal-text').value = journal.text || ''; renderJournalImages(); }
-function exportJournal() {
+window.exportJournal = function() {
   const exportData = { version: '1.0', journal, places, planItems, membersData, targetCity, dates: { dep: document.getElementById('dep-date').value, ret: document.getElementById('ret-date').value } };
   const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `travel_archive_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(url); toast('存档已导出');
-}
-function importJournal() { document.getElementById('import-journal-file').click(); }
-function loadJournalFromFile(event) {
+};
+window.importJournal = function() { document.getElementById('import-journal-file').click(); };
+window.loadJournalFromFile = function(event) {
   const file = event.target.files[0]; if(!file) return;
   const reader = new FileReader(); reader.onload = e => {
     try { const imported = JSON.parse(e.target.result); if(imported.journal) journal = imported.journal; if(imported.places) places = imported.places; if(imported.planItems) planItems = imported.planItems; if(imported.membersData) membersData = imported.membersData; if(imported.targetCity) targetCity = imported.targetCity; if(imported.dates) { if(imported.dates.dep) document.getElementById('dep-date').value = imported.dates.dep; if(imported.dates.ret) document.getElementById('ret-date').value = imported.dates.ret; } persistRoomData(); renderMembersList(); renderPlaces(); if(targetCity) { document.getElementById('target-city').value = targetCity; document.getElementById('main-badge').textContent = targetCity; fetchWeather(targetCity); fetchTransport(targetCity); } onDateChange(); updateGenBtn(); renderMiniPlan(); renderFullPlan(); loadJournalUI(); toast('导入成功，已刷新数据'); } catch(err) { toast('文件解析失败'); }
   }; reader.readAsText(file); event.target.value = '';
-}
+};
 
 // 倒计时与辅助
-function onDateChange() {
+window.onDateChange = function() {
   const dep = document.getElementById('dep-date').value, ret = document.getElementById('ret-date').value;
   const dest = document.getElementById('target-city').value || '目的地';
   const info = document.getElementById('date-info'), bar = document.getElementById('cd-bar');
@@ -791,20 +787,19 @@ function onDateChange() {
     document.getElementById('cd-m').innerHTML=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
   }
   tick(); cdTimer=setInterval(tick,30000); persistRoomData();
-}
+};
 
-function gotoTab(i,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('pg'+i).classList.add('active'); }
-function showInvite() { if(currentRoomCode) document.getElementById('roomCode').innerText = currentRoomCode; document.getElementById('inv-overlay').classList.add('show'); }
-function hideInv(){ document.getElementById('inv-overlay').classList.remove('show'); }
-function copyCode(){ if(currentRoomCode) navigator.clipboard?.writeText(currentRoomCode); toast('房间码已复制'); hideInv(); }
-function showRoomInfo() { if(currentRoomCode) toast(`房间码: ${currentRoomCode}`); else toast('尚未加入房间，请刷新页面重新加入'); }
+window.gotoTab = function(i,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('pg'+i).classList.add('active'); };
+window.showInvite = function() { if(currentRoomCode) document.getElementById('roomCode').innerText = currentRoomCode; document.getElementById('inv-overlay').classList.add('show'); };
+window.hideInv = function(){ document.getElementById('inv-overlay').classList.remove('show'); };
+window.copyCode = function(){ if(currentRoomCode) navigator.clipboard?.writeText(currentRoomCode); toast('房间码已复制'); window.hideInv(); };
+window.showRoomInfo = function() { if(currentRoomCode) toast(`房间码: ${currentRoomCode}`); else toast('尚未加入房间，请刷新页面重新加入'); };
 
 // 初始化
 (async function init() {
-  // 尝试从 localStorage 恢复上次加入的房间码
   const lastRoomCode = localStorage.getItem('last_room_code');
   if (lastRoomCode) {
-    const { data, error } = await supabase.from('travel_rooms').select('*').eq('code', lastRoomCode).single();
+    const { data, error } = await supabaseClient.from('travel_rooms').select('*').eq('code', lastRoomCode).single();
     if (!error && data) {
       currentRoomId = data.id;
       currentRoomCode = data.code;
@@ -814,7 +809,7 @@ function showRoomInfo() { if(currentRoomCode) toast(`房间码: ${currentRoomCod
       return;
     }
   }
-  showRoomModal();
+  window.showRoomModal();
 })();
 </script>
 </body>
