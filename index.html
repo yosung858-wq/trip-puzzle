@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>旅行拼图 · 一起计划</title>
+<title>旅行拼图 · 多人协作版（Supabase）</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* 完全保留原有样式，未作删改，仅确保滚动条等兼容 */
+/* ========== 完整样式 ========== */
 :root{--sand:#F5F0E8;--sand-dark:#EDE6D6;--ink:#1C1A16;--ink-soft:#4A4640;--ink-muted:#8C8880;--accent:#C4651A;--accent-light:#F0DBC8;--accent-pale:#FBF4ED;--sky:#3B6FA0;--sky-light:#D6E6F5;--green:#3A7D5A;--green-light:#D4EDE0;--red:#B84040;--border:rgba(28,26,22,0.12);--border-soft:rgba(28,26,22,0.07);--radius:12px;--radius-sm:8px;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink);min-height:100vh;}
@@ -163,6 +164,26 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
 .fi{animation:fadeIn 0.3s ease forwards;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+/* 后记样式 */
+.journal-section{margin-top:24px;}
+.journal-card{background:white;border-radius:var(--radius);border:1px solid var(--border);padding:20px;}
+.journal-title{font-size:16px;font-weight:600;font-family:'Noto Serif SC',serif;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.journal-text{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:13px;line-height:1.6;background:var(--sand);font-family:'DM Sans',sans-serif;resize:vertical;}
+.journal-text:focus{outline:none;border-color:var(--accent);}
+.journal-images{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+.journal-img-item{position:relative;width:80px;height:80px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);}
+.journal-img-item img{width:100%;height:100%;object-fit:cover;}
+.journal-img-item button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:20px;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:1;}
+.journal-upload{display:inline-flex;align-items:center;gap:5px;background:var(--sand);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-size:12px;margin-top:5px;}
+.journal-upload:hover{border-color:var(--accent);color:var(--accent);}
+.journal-buttons{display:flex;gap:8px;margin-top:15px;flex-wrap:wrap;}
+/* 房间模态框样式 */
+.auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.auth-card{background:white;border-radius:var(--radius);padding:28px;width:340px;max-width:90%;}
+.auth-card h2{font-family:'Noto Serif SC',serif;margin-bottom:12px;}
+.room-input{padding:10px;font-size:14px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100%;margin:8px 0;}
+.btn-auth{background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;width:100%;margin-top:8px;}
+.room-status{font-size:12px;color:var(--ink-muted);margin-top:8px;text-align:center;}
 </style>
 </head>
 <body>
@@ -170,11 +191,8 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 <div class="topbar">
   <div class="logo">旅行<span>拼图</span></div>
   <div class="topbar-right">
-    <div class="room-badge" onclick="showInvite()">TRIP · 2847</div>
-    <div class="avatar-row">
-      <div class="avatar av1">你</div><div class="avatar av2">小林</div>
-      <div class="avatar av3">阿杰</div><div class="avatar av4">+1</div>
-    </div>
+    <div class="room-badge" id="room-badge" onclick="showRoomInfo()">⚙️ 房间</div>
+    <div class="avatar-row" id="avatar-row"></div>
   </div>
 </div>
 
@@ -191,7 +209,7 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
 <div class="tab-nav">
   <button class="tab-btn active" onclick="gotoTab(0,this)">🗺 出发规划</button>
   <button class="tab-btn" onclick="gotoTab(1,this)">📌 攻略收集</button>
-  <button class="tab-btn" onclick="gotoTab(2,this)">📅 行程计划</button>
+  <button class="tab-btn" onclick="gotoTab(2,this)">📅 行程计划 · 后记</button>
 </div>
 
 <!-- PAGE 0: 出发规划 -->
@@ -212,9 +230,9 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
         <div class="sec-title">📅 出行日期</div>
         <div class="sec-subtitle">选定日期，开启倒计时</div>
         <div class="date-row">
-          <input type="date" class="date-input" id="dep-date"/>
+          <input type="date" class="date-input" id="dep-date" onchange="onDateChange()"/>
           <span style="font-size:12px;color:var(--ink-muted);">至</span>
-          <input type="date" class="date-input" id="ret-date"/>
+          <input type="date" class="date-input" id="ret-date" onchange="onDateChange()"/>
         </div>
         <div id="date-info" style="font-size:12px;color:var(--ink-muted);margin-bottom:14px;"></div>
         <div class="sec-title" style="margin-bottom:6px;">🎯 目标城市</div>
@@ -226,12 +244,12 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
       <div class="card-section">
         <div class="sec-title">🚄 交通票价参考</div>
         <div class="sec-subtitle" id="tc-sub">选定目的地后点「查询」</div>
-        <div id="tc-container"></div>
+        <div id="tc-container"><div style="font-size:12px;color:var(--ink-muted);padding:16px 0;text-align:center;">请先设置目标城市</div></div>
       </div>
       <div class="card-section">
         <div class="sec-title">🌤 目的地天气</div>
         <div class="sec-subtitle" id="wt-sub">实时天气 + 未来预报</div>
-        <div id="wt-container"></div>
+        <div id="wt-container"><div style="font-size:12px;color:var(--ink-muted);padding:16px 0;text-align:center;">请先设置目标城市</div></div>
       </div>
     </div>
   </div>
@@ -245,462 +263,369 @@ textarea.ta:focus{outline:none;border-color:var(--accent);}
       <div class="add-area">
         <div class="nm-row">
           <input class="sm-input" id="c-name" placeholder="你的名字" value="你" style="flex:1;"/>
-          <select class="sm-input" id="c-plat" style="width:95px;flex:none;">
-            <option>小红书</option><option>抖音</option><option>微博</option><option>大众点评</option><option>其他</option>
-          </select>
+          <select class="sm-input" id="c-plat" style="width:95px;flex:none;"><option>小红书</option><option>抖音</option><option>微博</option><option>大众点评</option><option>其他</option></select>
         </div>
         <div class="src-tabs">
           <button class="src-tab active" onclick="cTab('text',this)">📝 文字</button>
           <button class="src-tab" onclick="cTab('img',this)">🖼 截图</button>
         </div>
         <textarea class="ta" id="c-text" rows="5" placeholder="粘贴攻略内容…&#10;&#10;例：成都必吃！宽窄巷子龙抄手超绝…"></textarea>
-        <div class="upz" id="c-upz" onclick="document.getElementById('c-file').click()">
-          <div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div>
-          <input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/>
-        </div>
+        <div class="upz" id="c-upz" onclick="document.getElementById('c-file').click()"><div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/></div>
         <button class="btn-ext" id="btn-ext" onclick="extract()">✨ AI 提取地点</button>
       </div>
       <div class="p-scroll" id="cards-scroll"></div>
     </div>
-
     <div class="main-area">
-      <div class="main-tb">
-        <span class="dest-badge" id="main-badge">成都</span>
-        <button class="chip ca" id="cp-a" onclick="filt('all')">全部</button>
-        <button class="chip" id="cp-r" onclick="filt('restaurant')">🍜 餐厅</button>
-        <button class="chip" id="cp-t" onclick="filt('attraction')">🏛 景点</button>
-        <button class="chip" id="cp-h" onclick="filt('hotel')">🏨 住宿</button>
-      </div>
-      <div class="main-scroll" id="main-scroll">
-        <div class="empty-st" id="pl-empty"><span class="ee">🗺️</span>在左侧添加攻略，AI 自动提取地点</div>
-        <div id="pl-container"></div>
-      </div>
+      <div class="main-tb"><span class="dest-badge" id="main-badge">成都</span><button class="chip ca" id="cp-a" onclick="filt('all')">全部</button><button class="chip" id="cp-r" onclick="filt('restaurant')">🍜 餐厅</button><button class="chip" id="cp-t" onclick="filt('attraction')">🏛 景点</button><button class="chip" id="cp-h" onclick="filt('hotel')">🏨 住宿</button></div>
+      <div class="main-scroll" id="main-scroll"><div class="empty-st" id="pl-empty"><span class="ee">🗺️</span>在左侧添加攻略，AI 自动提取地点</div><div id="pl-container"></div></div>
     </div>
-
     <div class="sp sp-r">
       <div class="ph"><div class="ph-title">行程候选</div><div class="ph-sub">从地点列表加入</div></div>
-      <div class="plan-sub">
-        <div class="days-row">
-          <input class="days-in" id="c-days" type="number" min="1" max="14" value="3"/>
-          <span style="font-size:11px;color:var(--ink-muted);">天行程</span>
-        </div>
-        <button class="btn-gen" id="btn-gen" onclick="genPlan()" disabled>✨ AI 生成行程</button>
-      </div>
-      <div class="p-scroll" id="mini-plan" style="gap:0;">
-        <div class="plan-empty" id="mini-empty">从地点列表<br>点「+ 加入行程」<br>再 AI 智能排程 ✨</div>
-        <div id="mini-plan-items"></div>
-      </div>
+      <div class="plan-sub"><div class="days-row"><input class="days-in" id="c-days" type="number" min="1" max="14" value="3"/><span style="font-size:11px;color:var(--ink-muted);">天行程</span></div><button class="btn-gen" id="btn-gen" onclick="genPlan()" disabled>✨ AI 生成行程</button></div>
+      <div class="p-scroll" id="mini-plan" style="gap:0;"><div class="plan-empty" id="mini-empty">从地点列表<br>点「+ 加入行程」<br>再 AI 智能排程 ✨</div><div id="mini-plan-items"></div></div>
     </div>
   </div>
 </div>
 
-<!-- PAGE 2: 行程计划 -->
+<!-- PAGE 2: 行程计划 + 后记 -->
 <div class="tab-page" id="pg2" style="flex-direction:column;">
   <div class="pg-scroll">
-    <div id="full-plan">
-      <div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后，完整版显示在这里</div>
+    <div id="full-plan"><div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后，完整版显示在这里</div></div>
+    <div class="journal-section" id="journal-section">
+      <div class="journal-card">
+        <div class="journal-title">📝 后记 · 旅行存档</div>
+        <textarea id="journal-text" class="journal-text" rows="5" placeholder="写写旅行感悟、花费总结、推荐或避坑..."></textarea>
+        <div class="journal-images" id="journal-images"></div>
+        <div class="journal-upload" onclick="document.getElementById('journal-file').click()">📸 上传照片（最多9张）<input type="file" id="journal-file" style="display:none;" accept="image/*" multiple onchange="handleJournalImages(event)"/></div>
+        <div class="journal-buttons">
+          <button class="btn-primary" onclick="saveJournal()">💾 保存后记</button>
+          <button class="btn-outline" onclick="exportJournal()">📎 导出存档（JSON）</button>
+          <button class="btn-outline" onclick="importJournal()">📂 导入存档</button>
+          <input type="file" id="import-journal-file" style="display:none;" accept=".json" onchange="loadJournalFromFile(event)"/>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 <div class="overlay" id="inv-overlay" onclick="if(event.target===this)hideInv()">
-  <div class="modal">
-    <h2>邀请朋友 🗺️</h2>
-    <p>把代码发给朋友，他们打开后输入即可加入，一起规划！</p>
-    <div class="code-disp" id="roomCode">TRIP · 2847</div>
-    <div class="modal-btns">
-      <button class="btn-copy" onclick="copyCode()">复制邀请码</button>
-      <button class="btn-cls" onclick="hideInv()">关闭</button>
-    </div>
-  </div>
+  <div class="modal"><h2>邀请朋友 🗺️</h2><p>把房间码发给朋友，他们加入后可一起规划！</p><div class="code-disp" id="roomCode">TRIP · 2847</div><div class="modal-btns"><button class="btn-copy" onclick="copyCode()">复制房间码</button><button class="btn-cls" onclick="hideInv()">关闭</button></div></div>
 </div>
 
 <script>
-// ======================== 全局变量 ========================
-let places = {};           // 所有地点 { name: {name,type,note,mentions,inPlan} }
-let planItems = [];        // 行程 {day, items: [{time,name,note,type}]}
-let curFilt = 'all';
-let membersData = [];      // [{name, city}]
+// ======================== Supabase 配置 ========================
+// 请将下面的 URL 替换成你自己的 Supabase 项目 URL（格式：https://xxxxx.supabase.co）
+const SUPABASE_URL = 'https://wysbkblkuznbfmuyhzgc.supabase.co';  // 🔴 这里改成你的真实 URL
+const SUPABASE_ANON_KEY = 'sb_publishable_C3LaoqqseHc3oPlPxDqhlw_sY7tMfH1';  // 你提供的 key
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ======================== 全局状态 ========================
+let currentRoomId = null;
+let currentRoomCode = null;
+let unsubscribeRealtime = null;
+
+let places = {};
+let planItems = [];
+let membersData = [];
 let targetCity = '';
 let weatherCache = {};
 let transportCache = {};
+let journal = { text: '', images: [] };
 let cdTimer = null;
 
-// 颜色常量
 const TC = { restaurant:'#C4651A', attraction:'#3B6FA0', hotel:'#3A7D5A', transport:'#5C3A8A' };
 const TL = { restaurant:'🍜 餐厅', attraction:'🏛 景点', hotel:'🏨 住宿', transport:'🚇 交通' };
 const MC = ['#C4651A','#3A7D5A','#3B6FA0','#7B4FA0','#B84040'];
 
-// ======================== 数据持久化 ========================
-function saveAll() {
-  const data = {
-    places, planItems, membersData, targetCity,
-    depDate: document.getElementById('dep-date').value,
-    retDate: document.getElementById('ret-date').value,
-    weatherCache, transportCache
+function escapeHtml(str) { if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ======================== 房间与数据持久化 ========================
+function showRoomModal() {
+  const modalHtml = `
+    <div id="room-modal" class="auth-overlay">
+      <div class="auth-card">
+        <h2>✈️ 旅行房间</h2>
+        <p style="font-size:13px; margin-bottom:12px;">输入房间码加入，或创建新房间</p>
+        <input type="text" id="room-code-input" class="room-input" placeholder="房间码 (如 TRIP-2847)">
+        <button class="btn-auth" id="join-room-btn">加入房间</button>
+        <button class="btn-auth" id="create-room-btn" style="background:var(--ink); margin-top:8px;">➕ 创建新房间</button>
+        <div id="room-status" class="room-status"></div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.getElementById('join-room-btn').onclick = () => joinRoom();
+  document.getElementById('create-room-btn').onclick = () => createRoom();
+  document.getElementById('room-code-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') joinRoom(); });
+}
+function closeRoomModal() { document.getElementById('room-modal')?.remove(); }
+
+async function createRoom() {
+  const roomCode = 'TRIP-' + Math.floor(1000 + Math.random() * 9000);
+  const newRoom = { code: roomCode, data: getDefaultRoomData(), created_at: new Date() };
+  const { data, error } = await supabase.from('travel_rooms').insert([newRoom]).select().single();
+  if (error) { toast('创建失败: ' + error.message); return; }
+  currentRoomId = data.id;
+  currentRoomCode = data.code;
+  await loadRoomData(data);
+  closeRoomModal();
+  toast(`房间创建成功！码: ${roomCode}`);
+  navigator.clipboard?.writeText(roomCode);
+  startRealtimeSubscription();
+}
+
+async function joinRoom() {
+  const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!code) { toast('请输入房间码'); return; }
+  const { data, error } = await supabase.from('travel_rooms').select('*').eq('code', code).single();
+  if (error || !data) { toast('房间不存在'); return; }
+  currentRoomId = data.id;
+  currentRoomCode = data.code;
+  await loadRoomData(data);
+  closeRoomModal();
+  toast(`已加入房间 ${code}`);
+  startRealtimeSubscription();
+  localStorage.setItem('last_room_code', code);
+}
+
+function getDefaultRoomData() {
+  return {
+    membersData: [{name:'你',city:'上海'},{name:'小林',city:'杭州'},{name:'阿杰',city:'南京'}],
+    places: {
+      "宽窄巷子": { name:"宽窄巷子", type:"attraction", note:"历史街区", mentions:["小林"], inPlan:false },
+      "锦里古街": { name:"锦里古街", type:"attraction", note:"夜晚氛围极佳", mentions:["小林"], inPlan:false },
+      "龙抄手(宽窄巷子)": { name:"龙抄手(宽窄巷子)", type:"restaurant", note:"皮薄馅多", mentions:["小林"], inPlan:false },
+      "春熙路民宿": { name:"春熙路民宿", type:"hotel", note:"交通便利", mentions:["阿杰"], inPlan:false }
+    },
+    planItems: [],
+    targetCity: '成都',
+    journal: { text: '', images: [] },
+    depDate: '',
+    retDate: ''
   };
-  localStorage.setItem('travelPlanner', JSON.stringify(data));
 }
 
-function loadAll() {
-  const raw = localStorage.getItem('travelPlanner');
-  if (!raw) return false;
-  try {
-    const data = JSON.parse(raw);
-    places = data.places || {};
-    planItems = data.planItems || [];
-    membersData = data.membersData || [];
-    targetCity = data.targetCity || '';
-    if (data.depDate) document.getElementById('dep-date').value = data.depDate;
-    if (data.retDate) document.getElementById('ret-date').value = data.retDate;
-    weatherCache = data.weatherCache || {};
-    transportCache = data.transportCache || {};
-    return true;
-  } catch(e) { return false; }
+async function loadRoomData(room) {
+  const data = room.data;
+  membersData = data.membersData || [];
+  places = data.places || {};
+  planItems = data.planItems || [];
+  targetCity = data.targetCity || '';
+  journal = data.journal || { text: '', images: [] };
+  const depDate = data.depDate || '';
+  const retDate = data.retDate || '';
+  document.getElementById('dep-date').value = depDate;
+  document.getElementById('ret-date').value = retDate;
+  document.getElementById('target-city').value = targetCity;
+  document.getElementById('main-badge').textContent = targetCity || '成都';
+  
+  renderMembersList();
+  renderPlaces();
+  if (targetCity) { fetchWeather(targetCity); fetchTransport(targetCity); }
+  onDateChange();
+  updateGenBtn();
+  renderMiniPlan();
+  renderFullPlan();
+  loadJournalUI();
 }
 
-// ======================== UI 渲染 ========================
+async function persistRoomData() {
+  if (!currentRoomId) return;
+  const payload = {
+    membersData,
+    places,
+    planItems,
+    targetCity,
+    journal,
+    depDate: document.getElementById('dep-date').value,
+    retDate: document.getElementById('ret-date').value
+  };
+  const { error } = await supabase.from('travel_rooms').update({ data: payload }).eq('id', currentRoomId);
+  if (error) console.error('保存失败', error);
+}
+
+function startRealtimeSubscription() {
+  if (unsubscribeRealtime) unsubscribeRealtime();
+  const subscription = supabase
+    .channel(`room-${currentRoomId}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'travel_rooms', filter: `id=eq.${currentRoomId}` }, (payload) => {
+      const newData = payload.new.data;
+      // 避免重复刷新自己发出的更新
+      if (JSON.stringify(newData) !== JSON.stringify({ membersData, places, planItems, targetCity, journal, depDate: document.getElementById('dep-date').value, retDate: document.getElementById('ret-date').value })) {
+        loadRoomData(payload.new);
+        toast('房间数据已更新');
+      }
+    })
+    .subscribe();
+  unsubscribeRealtime = () => supabase.removeChannel(subscription);
+}
+
+// ======================== 以下为原有业务逻辑（所有修改点已加入 persistRoomData） ========================
+
 function renderMembersList() {
   const container = document.getElementById('members-list');
   container.innerHTML = '';
   membersData.forEach((m, idx) => {
-    const row = document.createElement('div');
-    row.className = 'member-row';
-    row.innerHTML = `
-      <div class="member-dot" style="background:${MC[idx % MC.length]}"></div>
-      <input class="sm-input" placeholder="名字" value="${escapeHtml(m.name)}" style="width:60px;" onchange="updateMember(${idx}, 'name', this.value)">
-      <input class="city-input" placeholder="出发城市" value="${escapeHtml(m.city)}" onchange="updateMember(${idx}, 'city', this.value)">
-      <button onclick="removeMember(${idx})" style="background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:14px;">×</button>
-    `;
+    const row = document.createElement('div'); row.className = 'member-row';
+    row.innerHTML = `<div class="member-dot" style="background:${MC[idx % MC.length]}"></div><input class="sm-input" placeholder="名字" value="${escapeHtml(m.name)}" style="width:60px;" onchange="updateMember(${idx}, 'name', this.value)"><input class="city-input" placeholder="出发城市" value="${escapeHtml(m.city)}" onchange="updateMember(${idx}, 'city', this.value)"><button onclick="removeMember(${idx})" style="background:none;border:none;cursor:pointer;">×</button>`;
     container.appendChild(row);
   });
-  if (membersData.length === 0) {
-    // 默认3人
-    membersData = [{name:'你',city:'上海'},{name:'小林',city:'杭州'},{name:'阿杰',city:'南京'}];
-    renderMembersList();
-  }
 }
-
-function updateMember(idx, field, val) {
-  if (field === 'name') membersData[idx].name = val;
-  else membersData[idx].city = val;
-  saveAll();
-}
-
-function removeMember(idx) {
-  membersData.splice(idx,1);
-  renderMembersList();
-  saveAll();
-}
-
-function addMember() {
-  membersData.push({name:`成员${membersData.length+1}`,city:''});
-  renderMembersList();
-  saveAll();
-}
+function updateMember(idx, field, val) { if (field === 'name') membersData[idx].name = val; else membersData[idx].city = val; persistRoomData(); }
+function removeMember(idx) { membersData.splice(idx,1); renderMembersList(); persistRoomData(); }
+function addMember() { membersData.push({name:`成员${membersData.length+1}`,city:''}); renderMembersList(); persistRoomData(); }
 
 function renderPlaces() {
-  const container = document.getElementById('pl-container');
-  const emptyDiv = document.getElementById('pl-empty');
+  const container = document.getElementById('pl-container'); const emptyDiv = document.getElementById('pl-empty');
   let arr = Object.values(places).filter(p => curFilt === 'all' || p.type === curFilt);
-  if (arr.length === 0) {
-    emptyDiv.style.display = '';
-    container.innerHTML = '';
-    return;
-  }
+  if (!arr.length) { emptyDiv.style.display = ''; container.innerHTML = ''; return; }
   emptyDiv.style.display = 'none';
   arr.sort((a,b) => b.mentions.length - a.mentions.length);
-  const hot = arr.filter(p => p.mentions.length >= 2);
-  const rest = arr.filter(p => p.mentions.length < 2);
+  const hot = arr.filter(p => p.mentions.length >= 2), rest = arr.filter(p => p.mentions.length < 2);
   let html = '';
   if (hot.length) html += `<div class="fh">🔥 高频推荐</div><div class="pl-grid">${hot.map(p => placeCardHtml(p)).join('')}</div>`;
   if (rest.length) html += `<div class="fh">📍 其他推荐</div><div class="pl-grid">${rest.map(p => placeCardHtml(p)).join('')}</div>`;
   container.innerHTML = html;
-  document.querySelectorAll('.btn-ap').forEach(btn => {
-    const name = btn.getAttribute('data-name');
-    if (name && places[name] && places[name].inPlan) btn.classList.add('added');
-    else btn.classList.remove('added');
-  });
 }
-
 function placeCardHtml(p) {
-  const col = TC[p.type] || '#888';
-  const lbl = TL[p.type] || p.type;
-  return `<div class="pl-card ${p.inPlan ? 'inp' : ''}">
-    <div style="display:flex;align-items:baseline;gap:2px"><span class="pl-freq">${p.mentions.length}</span><span class="pl-fl"> 人推荐</span></div>
-    <div class="pl-name">${escapeHtml(p.name)}</div>
-    <span class="pl-badge" style="background:${col}22;color:${col}">${lbl}</span>
-    <div class="pl-who">by ${p.mentions.map(escapeHtml).join('、')}</div>
-    <div class="pl-note">${escapeHtml(p.note)}</div>
-    <button class="btn-ap" data-name="${escapeHtml(p.name)}" onclick="togglePlan('${escapeHtml(p.name).replace(/'/g,"\\'")}')">${p.inPlan ? '✓ 已加入' : '+ 加入行程'}</button>
-  </div>`;
+  const col = TC[p.type] || '#888'; const lbl = TL[p.type] || p.type;
+  return `<div class="pl-card ${p.inPlan ? 'inp' : ''}"><div><span class="pl-freq">${p.mentions.length}</span><span class="pl-fl"> 人推荐</span></div><div class="pl-name">${escapeHtml(p.name)}</div><span class="pl-badge" style="background:${col}22;color:${col}">${lbl}</span><div class="pl-who">by ${p.mentions.map(escapeHtml).join('、')}</div><div class="pl-note">${escapeHtml(p.note)}</div><button class="btn-ap" data-name="${escapeHtml(p.name)}" onclick="togglePlan('${escapeHtml(p.name).replace(/'/g,"\\'")}')">${p.inPlan ? '✓ 已加入' : '+ 加入行程'}</button></div>`;
 }
+function togglePlan(name) { if(places[name]) { places[name].inPlan = !places[name].inPlan; renderPlaces(); updateGenBtn(); persistRoomData(); toast(`${name} ${places[name].inPlan ? '已加入行程' : '已移除'}`); } }
+function updateGenBtn() { const cnt = Object.values(places).filter(p => p.inPlan).length; const btn = document.getElementById('btn-gen'); btn.disabled = (cnt === 0); btn.textContent = cnt ? `✨ AI 生成行程（${cnt}个地点）` : '✨ AI 生成行程'; }
+let curFilt = 'all';
+function filt(type) { curFilt = type; document.querySelectorAll('[id^="cp-"]').forEach(c=>c.className='chip'); const map={all:'ca',restaurant:'cr',attraction:'cat',hotel:'ch'}; const el = document.getElementById('cp-'+(type==='all'?'a':type[0])); if(el) el.classList.add(map[type]||'ca'); renderPlaces(); }
 
-function togglePlan(name) {
-  if (!places[name]) return;
-  places[name].inPlan = !places[name].inPlan;
-  renderPlaces();
-  updateGenBtn();
-  saveAll();
-  toast(`${name} ${places[name].inPlan ? '已加入行程' : '已移除'}`);
-}
-
-function updateGenBtn() {
-  const cnt = Object.values(places).filter(p => p.inPlan).length;
-  const btn = document.getElementById('btn-gen');
-  btn.disabled = (cnt === 0);
-  btn.textContent = cnt ? `✨ AI 生成行程（${cnt}个地点）` : '✨ AI 生成行程';
-}
-
-// 添加攻略卡片及地点
-let nextCardId = 100;
-function addCardUI(card) {
-  const container = document.getElementById('cards-scroll');
-  const div = document.createElement('div');
-  div.className = 'cc fi';
-  const types = [...new Set((card.places || []).map(p => p.type))];
-  const imgHtml = card.imgSrc ? `<img src="${card.imgSrc}" style="width:100%;border-radius:4px;max-height:80px;object-fit:cover;margin-bottom:4px;">` : '';
-  div.innerHTML = `
-    <div class="cc-meta"><span class="cc-author">${escapeHtml(card.author)}</span><span class="cc-plat">${escapeHtml(card.platform)}</span><span class="cc-time">${card.time || '刚刚'}</span></div>
-    ${imgHtml}<div class="cc-txt">${escapeHtml(card.text)}</div>
-    <div class="cc-tags">${types.map(t => `<span class="cc-tag t-${t.slice(0,3)}">${TL[t] || t}</span>`).join('')}${card.places.length ? `<span class="cc-tag" style="background:var(--sand-dark);color:var(--ink-muted);">${card.places.length}处</span>` : ''}</div>
-  `;
-  container.prepend(div);
-}
-
-function mergePlacesFromExtract(placesList, author) {
-  for (let p of placesList) {
-    if (!places[p.name]) {
-      places[p.name] = {
-        name: p.name,
-        type: p.type,
-        note: p.note || '',
-        mentions: [],
-        inPlan: false
-      };
-    }
-    if (!places[p.name].mentions.includes(author)) {
-      places[p.name].mentions.push(author);
-    }
-    // 若 note 为空则更新
-    if (p.note && !places[p.name].note) places[p.name].note = p.note;
-  }
-  renderPlaces();
-  saveAll();
-}
-
-// 简易AI提取（基于关键词，无需API）
-function simpleExtract(text, author, platform) {
-  const lines = text.split(/[，,。；\n]/);
-  const candidates = [];
-  // 简单正则匹配：常见地名模式
-  const patterns = [
-    /([\u4e00-\u9fa5]{2,6})(?:餐厅|馆子|小吃|店|火锅|烧烤)/,  // 餐厅
-    /([\u4e00-\u9fa5]{2,6})(?:景点|公园|寺|庙|山|湖|桥|塔|街|巷)/, // 景点
-    /([\u4e00-\u9fa5]{2,6})(?:酒店|宾馆|民宿|客栈)/               // 酒店
+// 地点提取（简单后缀匹配）
+function smartExtract(text, author, platform) {
+  const suffixMap = [
+    { suffixes: ['博物馆','纪念馆','陈列馆','科技馆','艺术馆'], type: 'attraction' },
+    { suffixes: ['公园','故园','园林','景区','山庄','庭院','花园'], type: 'attraction' },
+    { suffixes: ['寺','庙','观','宫','庵','教堂'], type: 'attraction' },
+    { suffixes: ['楼','阁','塔','台','亭','书院'], type: 'attraction' },
+    { suffixes: ['故居','旧居','老宅','官厅','府邸'], type: 'attraction' },
+    { suffixes: ['餐厅','饭店','酒楼','馆子','食堂','小吃','蒸菜','火锅','烧烤','面馆','食府'], type: 'restaurant' },
+    { suffixes: ['酒店','宾馆','民宿','客栈','公寓'], type: 'hotel' },
+    { suffixes: ['广场','步行街','古街','巷子','里弄'], type: 'attraction' }
   ];
-  const types = ['restaurant','attraction','hotel'];
-  for (let line of lines) {
-    for (let i=0; i<patterns.length; i++) {
-      const match = line.match(patterns[i]);
-      if (match && match[1]) {
-        candidates.push({ name: match[1], type: types[i], note: line.slice(0,30) });
-        break;
+  const stopWords = ['位于','始建于','是','有','为','由','被','把','将','从','到','在','于','和','与','及','或','这','那','其','它','她','他','我们','你们','他们','都','也','还','更','最','很','太','非常','比较','特别','十分','挺'];
+  const sentences = text.split(/[，,。；！？\n\r]+/);
+  const candidates = []; const seen = new Set();
+  for (let sent of sentences) {
+    sent = sent.trim();
+    if (sent.length < 2) continue;
+    for (let rule of suffixMap) {
+      for (let suf of rule.suffixes) {
+        const idx = sent.indexOf(suf);
+        if (idx !== -1) {
+          let start = Math.max(0, idx - 8);
+          let name = sent.substring(start, idx + suf.length);
+          for (let sw of stopWords) if (name.startsWith(sw)) name = name.substring(sw.length);
+          name = name.replace(/[。！？；：、""''（）《》【】]/g, '').trim();
+          if (name.length >= 2 && name.length <= 12 && !seen.has(name)) {
+            seen.add(name);
+            let type = rule.type;
+            if (type === 'attraction' && /餐厅|饭|吃|蒸菜|小吃/.test(name)) type = 'restaurant';
+            candidates.push({ name: name, type: type, note: sent.slice(0, 30) });
+            break;
+          }
+        }
       }
     }
   }
-  // 去重
-  const unique = [];
-  const names = new Set();
-  for (let c of candidates) {
-    if (!names.has(c.name)) {
-      names.add(c.name);
-      unique.push(c);
-    }
+  if (candidates.length === 0 && text.length > 5) {
+    let fallback = text.slice(0, 18).replace(/[，,。！？\n]/g,'');
+    if (fallback.length > 2) candidates.push({ name: fallback, type: 'attraction', note: '推荐地点' });
   }
-  if (unique.length === 0 && text.length > 0) {
-    // fallback 默认演示
-    unique.push({ name: text.slice(0,12), type: 'attraction', note: '推荐地点' });
-  }
-  const summary = text.slice(0,60);
-  return { places: unique, summary };
+  const unique = []; const nameSet = new Set();
+  for (let c of candidates) { if (!nameSet.has(c.name)) { nameSet.add(c.name); unique.push(c); } }
+  return { places: unique, summary: text.slice(0, 60) };
 }
-
+let windowImgData = null;
+function handleImg(ev) { const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=e=>{ windowImgData=e.target.result; document.getElementById('c-upz').innerHTML=`<img src="${windowImgData}" style="max-height:80px;border-radius:5px;"><div style="margin-top:4px;">点击重新选择</div><input type="file" id="c-file" style="display:none;" onchange="handleImg(event)"/>`; }; reader.readAsDataURL(f); }
+function cTab(tab,btn){ document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const ta=document.getElementById('c-text'),uz=document.getElementById('c-upz'); if(tab==='img'){ ta.style.display='none'; uz.classList.add('show'); } else { ta.style.display=''; uz.classList.remove('show'); } }
+function addCardUI(card) {
+  const div = document.createElement('div'); div.className = 'cc fi';
+  const types = [...new Set((card.places || []).map(p => p.type))];
+  const imgHtml = card.imgSrc ? `<img src="${card.imgSrc}" style="width:100%;border-radius:4px;max-height:80px;object-fit:cover;margin-bottom:4px;">` : '';
+  div.innerHTML = `<div class="cc-meta"><span class="cc-author">${escapeHtml(card.author)}</span><span class="cc-plat">${escapeHtml(card.platform)}</span><span class="cc-time">${card.time}</span></div>${imgHtml}<div class="cc-txt">${escapeHtml(card.text)}</div><div class="cc-tags">${types.map(t => `<span class="cc-tag t-${t.slice(0,3)}">${TL[t] || t}</span>`).join('')}${card.places.length ? `<span class="cc-tag">${card.places.length}处</span>` : ''}</div>`;
+  document.getElementById('cards-scroll').prepend(div);
+}
 async function extract() {
   const author = document.getElementById('c-name').value.trim() || '匿名';
   const platform = document.getElementById('c-plat').value;
   const text = document.getElementById('c-text').value.trim();
   const isImg = document.getElementById('c-upz').classList.contains('show');
-  if (!text && !window.imgData) { toast('请输入文字或上传截图'); return; }
+  if (!text && !windowImgData) { toast('请输入文字或上传截图'); return; }
   const btn = document.getElementById('btn-ext');
   btn.disabled = true; btn.textContent = '🤖 提取中…';
-  const cardId = Date.now();
-  // 显示临时卡片
   const container = document.getElementById('cards-scroll');
   const tempDiv = document.createElement('div'); tempDiv.className = 'cc fi';
   tempDiv.innerHTML = `<div class="cc-meta"><span>${escapeHtml(author)}</span><span>${escapeHtml(platform)}</span><span>处理中...</span></div><div class="cc-ld"><div class="spinner"></div>分析中</div>`;
   container.prepend(tempDiv);
-
   let extracted = { places: [], summary: '' };
-  if (text) {
-    extracted = simpleExtract(text, author, platform);
-  } else if (window.imgData) {
-    // 模拟图片提取（实际可用OCR，这里简单模拟）
-    extracted = { places: [{ name: '图片中的地点', type: 'attraction', note: '从截图识别' }], summary: '截图攻略' };
-  }
+  if (text) extracted = smartExtract(text, author, platform);
+  else if (windowImgData) extracted = { places: [{ name: '截图中的地点', type: 'attraction', note: '从图片识别' }], summary: '截图攻略' };
   tempDiv.remove();
-  const newCard = {
-    id: cardId,
-    author, platform,
-    text: extracted.summary || text.slice(0,80),
-    places: extracted.places,
-    time: new Date().toLocaleTimeString(),
-    imgSrc: window.imgData || null
-  };
+  const newCard = { id: Date.now(), author, platform, text: extracted.summary, places: extracted.places, time: new Date().toLocaleTimeString(), imgSrc: windowImgData || null };
   addCardUI(newCard);
-  mergePlacesFromExtract(extracted.places, author);
-  toast(`提取了 ${extracted.places.length} 个地点`);
-  document.getElementById('c-text').value = '';
-  window.imgData = null;
+  for (let p of extracted.places) {
+    if (!places[p.name]) places[p.name] = { name: p.name, type: p.type, note: p.note || '', mentions: [], inPlan: false };
+    if (!places[p.name].mentions.includes(author)) places[p.name].mentions.push(author);
+    if (p.note && !places[p.name].note) places[p.name].note = p.note;
+  }
+  renderPlaces(); updateGenBtn(); persistRoomData();
+  toast(`✨ 提取了 ${extracted.places.length} 个地点`);
+  document.getElementById('c-text').value = ''; windowImgData = null;
   document.getElementById('c-upz').innerHTML = `<div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/>`;
   btn.disabled = false; btn.textContent = '✨ AI 提取地点';
 }
 
-// ======================== 天气（Open-Meteo） ========================
-async function fetchWeather(city) {
-  const wc = document.getElementById('wt-container');
-  document.getElementById('wt-sub').innerHTML = `${city} 天气`;
-  wc.innerHTML = '<div class="loading-row"><div class="spinner"></div>获取天气中…</div>';
-  try {
-    // 先获取坐标 (使用高德地理编码免费版需要key，改用Nominatim公共API)
-    const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
-    const geoRes = await fetch(geoUrl);
-    const geoData = await geoRes.json();
-    if (!geoData.length) throw new Error('城市未找到');
-    const lat = geoData[0].lat, lon = geoData[0].lon;
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
-    const wRes = await fetch(weatherUrl);
-    const wData = await wRes.json();
-    const codes = {0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌧',61:'🌧',71:'❄️'};
-    const weatherCode = wData.current_weather.weathercode;
-    const icon = codes[weatherCode] || '🌡';
-    const temp = `${wData.current_weather.temperature}°C`;
-    const condition = wData.current_weather.windspeed ? `风速${wData.current_weather.windspeed}km/h` : '';
-    const daily = wData.daily;
-    const forecasts = [];
-    for (let i=0; i<daily.time.length && i<5; i++) {
-      forecasts.push({
-        date: daily.time[i].slice(5),
-        high: `${daily.temperature_2m_max[i]}°`,
-        low: `${daily.temperature_2m_min[i]}°`,
-        condition: '',
-        icon: codes[daily.weathercode[i]] || '🌤'
-      });
-    }
-    weatherCache[city] = { current: {temp,condition,icon}, forecast: forecasts };
-    renderWeatherUI(city);
-    return weatherCache[city];
-  } catch(e) {
-    wc.innerHTML = `<div style="font-size:12px;color:var(--red);padding:8px 0;">天气获取失败：${e.message}</div>`;
-    return null;
-  }
-}
-
-function renderWeatherUI(city) {
-  const wc = document.getElementById('wt-container');
-  const w = weatherCache[city];
-  if (!w) return;
-  const cur = w.current;
-  const fc = w.forecast || [];
-  wc.innerHTML = `<div class="w-now"><span class="w-icon">${cur.icon}</span><div><div class="w-temp">${cur.temp}</div><div class="w-cond">${cur.condition}</div></div></div>
-    <div style="font-size:10px;color:var(--ink-muted);margin-bottom:5px;">未来预报</div>
-    <div class="w-fc">${fc.map(f => `<div class="wf-d"><div class="wf-date">${f.date}</div><div class="wf-icon">${f.icon}</div><div class="wf-temp">${f.high}/${f.low}</div></div>`).join('')}</div>`;
-}
-
-// ======================== 交通模拟（基于距离估算） ========================
-async function fetchTransport(city) {
-  const tcDiv = document.getElementById('tc-container');
-  document.getElementById('tc-sub').innerHTML = `各城市 → ${city}`;
-  const cities = membersData.filter(m => m.city.trim()).map(m => ({ name: m.name, city: m.city }));
-  if (cities.length === 0) { tcDiv.innerHTML = '<div style="padding:8px 0;">请填写出发城市</div>'; return; }
-  tcDiv.innerHTML = '<div class="loading-row"><div class="spinner"></div>估算交通中…</div>';
-  try {
-    // 获取目标城市坐标
-    const destGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`).then(r=>r.json());
-    if (!destGeo.length) throw new Error('目标城市坐标失败');
-    const destCoord = { lat: parseFloat(destGeo[0].lat), lon: parseFloat(destGeo[0].lon) };
-    const routes = [];
-    for (let m of cities) {
-      const srcGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(m.city)}&format=json&limit=1`).then(r=>r.json());
-      if (!srcGeo.length) continue;
-      const srcCoord = { lat: parseFloat(srcGeo[0].lat), lon: parseFloat(srcGeo[0].lon) };
-      const R = 6371;
-      const dLat = (destCoord.lat - srcCoord.lat) * Math.PI/180;
-      const dLon = (destCoord.lon - srcCoord.lon) * Math.PI/180;
-      const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(srcCoord.lat*Math.PI/180)*Math.cos(destCoord.lat*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const dist = R * c;
-      const trainPrice = Math.round(dist * 0.35) + 50;
-      const airPrice = Math.round(dist * 0.65) + 100;
-      const trainDur = (dist / 250).toFixed(1) + 'h';
-      const airDur = (dist / 800).toFixed(1) + 'h';
-      routes.push({
-        from: m.city,
-        options: [
-          { type:'高铁', icon:'🚄', price:`¥${trainPrice}起`, duration:trainDur },
-          { type:'飞机', icon:'✈️', price:`¥${airPrice}起`, duration:airDur }
-        ]
-      });
-    }
-    transportCache[city] = routes;
-    tcDiv.innerHTML = routes.map(r => `
-      <div class="transport-block">
-        <div class="from-label"><b>${escapeHtml(r.from)}</b> → <span style="color:var(--accent);font-weight:500;">${escapeHtml(city)}</span></div>
-        <div class="tc-grid">${r.options.map(o => `<div class="tc-card"><span class="tc-icon">${o.icon}</span><div class="tc-type">${o.type}</div><div class="tc-price">${o.price}</div><div class="tc-dur">⏱${o.duration}</div></div>`).join('')}</div>
-      </div>
-    `).join('');
-  } catch(e) {
-    tcDiv.innerHTML = `<div style="color:var(--red);">交通估算失败：${e.message}</div>`;
-  }
-}
-
-// ======================== AI 推荐目的地（规则+折中） ========================
-function recDests() {
+// 推荐目的地（地理中心）
+async function recDests() {
   const cities = membersData.filter(m => m.city.trim()).map(m => m.city);
   if (!cities.length) { toast('请填写出发城市'); return; }
-  const btn = document.getElementById('btn-rec');
-  btn.disabled = true; btn.textContent = '🤖 推荐中…';
+  const btn = document.getElementById('btn-rec'); btn.disabled = true; btn.textContent = '🤖 计算推荐中…';
   const container = document.getElementById('rec-container');
-  // 常见热门城市库
-  const hotCities = ['成都','重庆','西安','长沙','厦门','青岛','大理','丽江','桂林','杭州','苏州','南京'];
-  // 简单推荐：计算每个热门城市到各出发城市的平均距离（心理距离）->取前3
-  const recs = [];
-  for (let dest of hotCities.slice(0,10)) {
-    // 假装是一个合理的理由
-    let reason = '';
-    if (dest === '成都') reason = '美食火锅，景点集中';
-    else if (dest === '重庆') reason = '8D魔幻，夜景绝美';
-    else if (dest === '西安') reason = '历史古都，面食丰富';
-    else if (dest === '长沙') reason = '不夜城，湘菜劲爽';
-    else reason = '热门旅游地，交通便利';
-    recs.push({ name: dest, reason, tags: ['热门','适合多人'], dist: '均衡适中' });
-  }
-  container.innerHTML = `<div class="dest-recs">${recs.slice(0,3).map((d,i)=>`
-    <div class="dest-rec-card" onclick="selectDest('${escapeHtml(d.name)}', this)">
-      <span class="dest-rank">${i+1}</span>
-      <div class="dest-info">
-        <div class="dest-name">${escapeHtml(d.name)}</div>
-        <div class="dest-why">${escapeHtml(d.reason)}</div>
-        <div class="dest-tags"><span class="dest-tag">${escapeHtml(d.tags[0])}</span></div>
-      </div>
-      <button class="dest-sel-btn">选择</button>
-    </div>`).join('')}</div>`;
+  container.innerHTML = '<div class="loading-row"><div class="spinner"></div>分析成员位置…</div>';
+  try {
+    const coords = [];
+    for (let city of cities) {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`).then(r=>r.json());
+      if (geo && geo[0]) coords.push({ lat: parseFloat(geo[0].lat), lon: parseFloat(geo[0].lon), city });
+    }
+    if (coords.length === 0) throw new Error('无法获取城市坐标');
+    const centerLat = coords.reduce((sum,c)=>sum+c.lat,0)/coords.length;
+    const centerLon = coords.reduce((sum,c)=>sum+c.lon,0)/coords.length;
+    const hotCities = [
+      { name:'成都', lat:30.5728, lon:104.0668, reason:'美食之都，熊猫基地', tags:['川菜','休闲'] },
+      { name:'重庆', lat:29.4316, lon:106.9123, reason:'魔幻8D，火锅之都', tags:['夜景','麻辣'] },
+      { name:'西安', lat:34.3416, lon:108.9398, reason:'十三朝古都，面食天堂', tags:['历史','美食'] },
+      { name:'长沙', lat:28.2282, lon:112.9388, reason:'不夜城，湘菜劲爽', tags:['夜生活','辣'] },
+      { name:'厦门', lat:24.4798, lon:118.0894, reason:'海滨文艺，浪漫鼓浪屿', tags:['海景','小资'] },
+      { name:'青岛', lat:36.0671, lon:120.3826, reason:'红瓦绿树，啤酒海鲜', tags:['海滨','啤酒'] },
+      { name:'大理', lat:25.6065, lon:100.2676, reason:'风花雪月，苍山洱海', tags:['古镇','自然'] },
+      { name:'桂林', lat:25.2736, lon:110.2900, reason:'山水甲天下', tags:['喀斯特','漂流'] },
+      { name:'杭州', lat:30.2741, lon:120.1551, reason:'西湖龙井，江南韵味', tags:['园林','茶'] },
+      { name:'南京', lat:32.0603, lon:118.7969, reason:'六朝古都，梧桐大道', tags:['历史','民国'] }
+    ];
+    function distance(lat1,lon1,lat2,lon2) {
+      const R=6371; const dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+    const withDist = hotCities.map(c => ({ ...c, dist: distance(centerLat, centerLon, c.lat, c.lon) }));
+    withDist.sort((a,b) => a.dist - b.dist);
+    const top3 = withDist.slice(0,3);
+    container.innerHTML = `<div class="dest-recs">${top3.map((d,i)=>`<div class="dest-rec-card" onclick="selectDest('${escapeHtml(d.name)}', this)"><span class="dest-rank">${i+1}</span><div class="dest-info"><div class="dest-name">${escapeHtml(d.name)}</div><div class="dest-why">${escapeHtml(d.reason)}</div><div class="dest-dist">✈️ 距中心约 ${Math.round(d.dist)} km</div><div class="dest-tags">${d.tags.map(t=>`<span class="dest-tag">${escapeHtml(t)}</span>`).join('')}</div></div><button class="dest-sel-btn">选择</button></div>`).join('')}</div>`;
+  } catch(e) { container.innerHTML = `<div style="color:var(--red);padding:8px;">推荐失败：${e.message}</div>`; }
   btn.disabled = false; btn.textContent = '✨ AI 推荐目的地';
 }
-
 function selectDest(name, cardElem) {
-  document.querySelectorAll('.dest-rec-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.dest-rec-card').forEach(c=>c.classList.remove('selected'));
   cardElem.classList.add('selected');
   document.getElementById('target-city').value = name;
   document.getElementById('main-badge').textContent = name;
@@ -708,170 +633,189 @@ function selectDest(name, cardElem) {
   onDateChange();
 }
 
-// 统一点击查询天气交通
+// 天气与交通
+async function fetchWeather(city) {
+  const wc = document.getElementById('wt-container'); document.getElementById('wt-sub').innerHTML = `${city} 天气`;
+  wc.innerHTML = '<div class="loading-row"><div class="spinner"></div>获取天气中…</div>';
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`).then(r=>r.json());
+    if (!geo.length) throw new Error('未找到城市');
+    const lat = geo[0].lat, lon = geo[0].lon;
+    const weather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`).then(r=>r.json());
+    const codes = {0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌧',61:'🌧',71:'❄️'};
+    const cur = weather.current_weather;
+    const icon = codes[cur.weathercode] || '🌡';
+    const daily = weather.daily;
+    const forecasts = [];
+    for (let i=0;i<daily.time.length;i++) forecasts.push({ date: daily.time[i].slice(5), high: `${daily.temperature_2m_max[i]}°`, low: `${daily.temperature_2m_min[i]}°`, icon: codes[daily.weathercode[i]] || '🌤' });
+    weatherCache[city] = { current: { temp: `${cur.temperature}°C`, condition: `风速${cur.windspeed}km/h`, icon }, forecast: forecasts };
+    renderWeatherUI(city);
+  } catch(e) { wc.innerHTML = `<div style="color:var(--red);">天气获取失败</div>`; }
+}
+function renderWeatherUI(city) {
+  const w = weatherCache[city]; if(!w) return;
+  document.getElementById('wt-container').innerHTML = `<div class="w-now"><span class="w-icon">${w.current.icon}</span><div><div class="w-temp">${w.current.temp}</div><div class="w-cond">${w.current.condition}</div></div></div><div class="w-fc">${w.forecast.map(f=>`<div class="wf-d"><div class="wf-date">${f.date}</div><div class="wf-icon">${f.icon}</div><div class="wf-temp">${f.high}/${f.low}</div></div>`).join('')}</div>`;
+}
+async function fetchTransport(city) {
+  const tcDiv = document.getElementById('tc-container'); document.getElementById('tc-sub').innerHTML = `各城市 → ${city}`;
+  const cities = membersData.filter(m=>m.city.trim()).map(m=>m.city);
+  if(!cities.length){ tcDiv.innerHTML='<div>请填写出发城市</div>'; return; }
+  tcDiv.innerHTML='<div class="loading-row"><div class="spinner"></div>估算交通…</div>';
+  try {
+    const destGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`).then(r=>r.json());
+    if(!destGeo.length) throw new Error();
+    const destCoord = { lat: parseFloat(destGeo[0].lat), lon: parseFloat(destGeo[0].lon) };
+    const routes = [];
+    for(let srcCity of cities){
+      const srcGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(srcCity)}&format=json&limit=1`).then(r=>r.json());
+      if(!srcGeo.length) continue;
+      const srcCoord = { lat: parseFloat(srcGeo[0].lat), lon: parseFloat(srcGeo[0].lon) };
+      const R=6371; const dLat=(destCoord.lat-srcCoord.lat)*Math.PI/180; const dLon=(destCoord.lon-srcCoord.lon)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(srcCoord.lat*Math.PI/180)*Math.cos(destCoord.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const trainPrice = Math.round(dist * 0.35) + 50; const airPrice = Math.round(dist * 0.65) + 100;
+      routes.push({ from: srcCity, options: [{ type:'高铁', icon:'🚄', price:`¥${trainPrice}起`, duration:`${(dist/250).toFixed(1)}h`},{ type:'飞机', icon:'✈️', price:`¥${airPrice}起`, duration:`${(dist/800).toFixed(1)}h`}] });
+    }
+    transportCache[city]=routes;
+    tcDiv.innerHTML = routes.map(r=>`<div class="transport-block"><div class="from-label"><b>${escapeHtml(r.from)}</b> → <span style="color:var(--accent);">${escapeHtml(city)}</span></div><div class="tc-grid">${r.options.map(o=>`<div class="tc-card"><span class="tc-icon">${o.icon}</span><div class="tc-type">${o.type}</div><div class="tc-price">${o.price}</div><div class="tc-dur">⏱${o.duration}</div></div>`).join('')}</div></div>`).join('');
+  } catch(e){ tcDiv.innerHTML='<div style="color:var(--red);">交通估算失败</div>'; }
+}
 async function fetchAll() {
   const dest = document.getElementById('target-city').value.trim();
-  if (!dest) { toast('请输入目标城市'); return; }
-  targetCity = dest;
-  document.getElementById('main-badge').textContent = dest;
-  document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
+  if(!dest){ toast('请输入目标城市'); return; }
+  targetCity = dest; document.getElementById('main-badge').textContent = dest; document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
   onDateChange();
-  const btn = document.getElementById('btn-fetch');
-  btn.disabled = true; btn.textContent = '查询中…';
+  const btn = document.getElementById('btn-fetch'); btn.disabled=true; btn.textContent='查询中…';
   await Promise.all([fetchWeather(dest), fetchTransport(dest)]);
-  btn.disabled = false; btn.textContent = '查询天气 & 交通';
-  saveAll();
+  btn.disabled=false; btn.textContent='查询天气 & 交通'; persistRoomData();
 }
 
-// ======================== 行程生成（智能排序） ========================
+// 行程生成
 function genPlan() {
-  const selected = Object.values(places).filter(p => p.inPlan);
-  if (!selected.length) { toast('请先加入地点'); return; }
-  const days = parseInt(document.getElementById('c-days').value) || 3;
-  const btn = document.getElementById('btn-gen');
-  btn.disabled = true; btn.textContent = '🤖 排程中…';
-  // 简单智能排程：按类型分到每一天，餐厅放中午，景点上午下午，酒店第一天
-  const items = [...selected];
-  const hotels = items.filter(i => i.type === 'hotel');
-  const restaurants = items.filter(i => i.type === 'restaurant');
-  const attractions = items.filter(i => i.type === 'attraction');
-  const others = items.filter(i => !['hotel','restaurant','attraction'].includes(i.type));
+  const selected = Object.values(places).filter(p=>p.inPlan);
+  if(!selected.length){ toast('请先加入地点'); return; }
+  const days = parseInt(document.getElementById('c-days').value)||3;
+  const btn = document.getElementById('btn-gen'); btn.disabled=true; btn.textContent='🤖 排程中…';
+  const hotels = selected.filter(p=>p.type==='hotel');
+  const restaurants = selected.filter(p=>p.type==='restaurant');
+  const attractions = selected.filter(p=>p.type==='attraction');
   const newPlan = [];
-  let dayIdx = 1;
-  // 每天固定结构：上午景点，中午餐厅，下午景点，晚上餐厅（如有）
-  for (let d=0; d<days; d++) {
-    const dayItems = [];
-    // 第一天加酒店
-    if (d===0 && hotels.length) {
-      dayItems.push({ time:'14:00', name: hotels[0].name, note: hotels[0].note, type:'hotel' });
-    }
-    // 取景点（轮流）
-    const att = attractions[d % attractions.length] || (attractions.length?attractions[0]:null);
-    if (att) dayItems.push({ time:'09:30', name: att.name, note: att.note, type:'attraction' });
-    const lunch = restaurants[d % restaurants.length] || (restaurants.length?restaurants[0]:null);
-    if (lunch) dayItems.push({ time:'12:30', name: lunch.name, note: lunch.note, type:'restaurant' });
-    const att2 = attractions[(d+1) % attractions.length] || (attractions.length?attractions[0]:null);
-    if (att2 && att2.name !== (att?.name)) dayItems.push({ time:'15:00', name: att2.name, note: att2.note, type:'attraction' });
-    const dinner = restaurants[(d+2) % restaurants.length] || (restaurants.length?restaurants[0]:null);
-    if (dinner && dinner.name !== lunch?.name) dayItems.push({ time:'19:00', name: dinner.name, note: dinner.note, type:'restaurant' });
-    if (dayItems.length === 0 && others.length) dayItems.push({ time:'10:00', name: others[0].name, note: others[0].note, type:'transport' });
-    newPlan.push({ day: dayIdx++, items: dayItems });
+  for(let d=0; d<days; d++){
+    const items = [];
+    if(d===0 && hotels.length) items.push({ time:'14:00', name: hotels[0].name, note: hotels[0].note, type:'hotel' });
+    const att = attractions[d % attractions.length] || (attractions[0]);
+    if(att) items.push({ time:'09:30', name: att.name, note: att.note, type:'attraction' });
+    const lunch = restaurants[d % restaurants.length] || (restaurants[0]);
+    if(lunch) items.push({ time:'12:30', name: lunch.name, note: lunch.note, type:'restaurant' });
+    const att2 = attractions[(d+1)%attractions.length] || (attractions[0]);
+    if(att2 && att2.name !== att?.name) items.push({ time:'15:00', name: att2.name, note: att2.note, type:'attraction' });
+    const dinner = restaurants[(d+2)%restaurants.length] || (restaurants[0]);
+    if(dinner && dinner.name !== lunch?.name) items.push({ time:'19:00', name: dinner.name, note: dinner.note, type:'restaurant' });
+    if(items.length===0 && selected.length) items.push({ time:'10:00', name: selected[0].name, note: selected[0].note, type:selected[0].type });
+    newPlan.push({ day: d+1, items });
   }
   planItems = newPlan;
-  renderMiniPlan();
-  renderFullPlan();
+  renderMiniPlan(); renderFullPlan();
   toast('行程生成完成 ✨');
-  btn.disabled = false; updateGenBtn();
-  saveAll();
+  btn.disabled=false; updateGenBtn(); persistRoomData();
 }
-
 function renderMiniPlan() {
-  const container = document.getElementById('mini-plan-items');
-  const emptyDiv = document.getElementById('mini-empty');
-  if (!planItems.length) { emptyDiv.style.display = ''; container.innerHTML = ''; return; }
-  emptyDiv.style.display = 'none';
+  const container = document.getElementById('mini-plan-items'); const emptyDiv = document.getElementById('mini-empty');
+  if(!planItems.length){ emptyDiv.style.display=''; container.innerHTML=''; return; }
+  emptyDiv.style.display='none';
   const dest = document.getElementById('target-city').value;
   const w = weatherCache[dest];
-  container.innerHTML = planItems.map(day => `
-    <div class="day-blk fi">
-      <div class="day-lbl">第${day.day}天 <span class="day-w" data-day="${day.day-1}">${w && w.forecast && w.forecast[day.day-1] ? w.forecast[day.day-1].icon+' '+w.forecast[day.day-1].high+'/'+w.forecast[day.day-1].low : ''}</span></div>
-      ${day.items.map(it => `<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div><button class="it-rm" onclick="removePlanItem(${day.day-1},'${escapeHtml(it.name).replace(/'/g,"\\'")}')">×</button></div>`).join('')}
-    </div>
-  `).join('');
+  container.innerHTML = planItems.map(day=>`<div class="day-blk fi"><div class="day-lbl">第${day.day}天 <span class="day-w">${w&&w.forecast&&w.forecast[day.day-1]?w.forecast[day.day-1].icon+' '+w.forecast[day.day-1].high+'/'+w.forecast[day.day-1].low:''}</span></div>${day.items.map(it=>`<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div><button class="it-rm" onclick="removePlanItem(${day.day-1},'${escapeHtml(it.name).replace(/'/g,"\\'")}')">×</button></div>`).join('')}</div>`).join('');
 }
-
 function renderFullPlan() {
   const fp = document.getElementById('full-plan');
-  if (!planItems.length) { fp.innerHTML = '<div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后显示在这里</div>'; return; }
+  if(!planItems.length){ fp.innerHTML='<div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后显示在这里</div>'; return; }
   const dest = document.getElementById('target-city').value;
   const w = weatherCache[dest];
-  fp.innerHTML = `<div style="margin-bottom:18px;"><h2 style="font-family:'Noto Serif SC',serif;font-size:20px;">📍 ${escapeHtml(dest)} 行程</h2></div>
-    <div class="full-plan-grid">${planItems.map(day => `<div class="card-section"><div style="display:flex;gap:7px;margin-bottom:10px;"><span style="font-family:'Noto Serif SC',serif;font-size:22px;color:var(--accent);">${day.day}</span><span>第 ${day.day} 天</span>${w && w.forecast && w.forecast[day.day-1] ? `<span style="margin-left:auto;font-size:12px;">${w.forecast[day.day-1].icon} ${w.forecast[day.day-1].high}/${w.forecast[day.day-1].low}</span>` : ''}</div>${day.items.map(it => `<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div></div>`).join('')}</div>`).join('')}</div>`;
+  fp.innerHTML = `<div style="margin-bottom:18px;"><h2 style="font-family:\'Noto Serif SC\',serif;">📍 ${escapeHtml(dest)} 行程</h2></div><div class="full-plan-grid">${planItems.map(day=>`<div class="card-section"><div style="display:flex;gap:7px;margin-bottom:10px;"><span style="font-size:22px;color:var(--accent);">${day.day}</span><span>第 ${day.day} 天</span>${w&&w.forecast&&w.forecast[day.day-1]?`<span style="margin-left:auto;">${w.forecast[day.day-1].icon} ${w.forecast[day.day-1].high}/${w.forecast[day.day-1].low}</span>`:''}</div>${day.items.map(it=>`<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div></div>`).join('')}</div>`).join('')}</div>`;
 }
-
 function removePlanItem(dayIdx, name) {
-  if (planItems[dayIdx]) {
-    planItems[dayIdx].items = planItems[dayIdx].items.filter(i => i.name !== name);
-    if (planItems[dayIdx].items.length === 0) planItems.splice(dayIdx,1);
-    for (let i=0; i<planItems.length; i++) planItems[i].day = i+1;
-    renderMiniPlan();
-    renderFullPlan();
-    saveAll();
-  }
+  if(planItems[dayIdx]){ planItems[dayIdx].items = planItems[dayIdx].items.filter(i=>i.name!==name); if(!planItems[dayIdx].items.length) planItems.splice(dayIdx,1); for(let i=0;i<planItems.length;i++) planItems[i].day=i+1; renderMiniPlan(); renderFullPlan(); persistRoomData(); }
 }
 
-// ======================== 倒计时 & 日期 ========================
+// 后记与存档
+function saveJournal() { journal.text = document.getElementById('journal-text').value; renderJournalImages(); persistRoomData(); toast('后记已保存'); }
+function renderJournalImages() {
+  const container = document.getElementById('journal-images');
+  container.innerHTML = '';
+  (journal.images || []).forEach((imgBase64, idx) => {
+    const div = document.createElement('div'); div.className = 'journal-img-item';
+    div.innerHTML = `<img src="${imgBase64}"><button onclick="removeJournalImage(${idx})">×</button>`;
+    container.appendChild(div);
+  });
+}
+function removeJournalImage(idx) { journal.images.splice(idx,1); renderJournalImages(); persistRoomData(); toast('已删除照片'); }
+function handleJournalImages(event) {
+  const files = Array.from(event.target.files);
+  const total = (journal.images || []).length + files.length;
+  if(total > 9) { toast('最多上传9张照片'); return; }
+  files.forEach(file => { const reader = new FileReader(); reader.onload = e => { journal.images.push(e.target.result); renderJournalImages(); persistRoomData(); }; reader.readAsDataURL(file); });
+  document.getElementById('journal-file').value = '';
+}
+function loadJournalUI() { document.getElementById('journal-text').value = journal.text || ''; renderJournalImages(); }
+function exportJournal() {
+  const exportData = { version: '1.0', journal, places, planItems, membersData, targetCity, dates: { dep: document.getElementById('dep-date').value, ret: document.getElementById('ret-date').value } };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `travel_archive_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(url); toast('存档已导出');
+}
+function importJournal() { document.getElementById('import-journal-file').click(); }
+function loadJournalFromFile(event) {
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader(); reader.onload = e => {
+    try { const imported = JSON.parse(e.target.result); if(imported.journal) journal = imported.journal; if(imported.places) places = imported.places; if(imported.planItems) planItems = imported.planItems; if(imported.membersData) membersData = imported.membersData; if(imported.targetCity) targetCity = imported.targetCity; if(imported.dates) { if(imported.dates.dep) document.getElementById('dep-date').value = imported.dates.dep; if(imported.dates.ret) document.getElementById('ret-date').value = imported.dates.ret; } persistRoomData(); renderMembersList(); renderPlaces(); if(targetCity) { document.getElementById('target-city').value = targetCity; document.getElementById('main-badge').textContent = targetCity; fetchWeather(targetCity); fetchTransport(targetCity); } onDateChange(); updateGenBtn(); renderMiniPlan(); renderFullPlan(); loadJournalUI(); toast('导入成功，已刷新数据'); } catch(err) { toast('文件解析失败'); }
+  }; reader.readAsText(file); event.target.value = '';
+}
+
+// 倒计时与辅助
 function onDateChange() {
-  const dep = document.getElementById('dep-date').value;
-  const ret = document.getElementById('ret-date').value;
+  const dep = document.getElementById('dep-date').value, ret = document.getElementById('ret-date').value;
   const dest = document.getElementById('target-city').value || '目的地';
-  const info = document.getElementById('date-info');
-  const bar = document.getElementById('cd-bar');
-  if (!dep) { bar.classList.add('hidden'); return; }
-  if (ret && ret < dep) { document.getElementById('ret-date').value = ''; return; }
-  if (ret) {
-    const d1 = new Date(dep), d2 = new Date(ret);
-    const days = Math.round((d2-d1)/86400000)+1;
-    info.textContent = `共 ${days} 天 · ${dep} 至 ${ret}`;
-    document.getElementById('c-days').value = days;
-  } else info.textContent = `出发：${dep}`;
+  const info = document.getElementById('date-info'), bar = document.getElementById('cd-bar');
+  if(!dep){ bar.classList.add('hidden'); return; }
+  if(ret && ret<dep){ document.getElementById('ret-date').value=''; return; }
+  if(ret){ const d1=new Date(dep),d2=new Date(ret); const days=Math.round((d2-d1)/86400000)+1; info.textContent=`共 ${days} 天 · ${dep} 至 ${ret}`; document.getElementById('c-days').value=days; }
+  else info.textContent=`出发：${dep}`;
   document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
   bar.classList.remove('hidden');
-  if (cdTimer) clearInterval(cdTimer);
-  function tick() {
-    const now = new Date(), target = new Date(dep+' 08:00:00'), diff = target-now;
-    if (diff <= 0) {
-      document.getElementById('cd-d').innerHTML = '🎉'; document.getElementById('cd-h').innerHTML = '出发'; document.getElementById('cd-m').innerHTML = '啦';
-      clearInterval(cdTimer); return;
+  if(cdTimer) clearInterval(cdTimer);
+  function tick(){
+    const now=new Date(), target=new Date(dep+' 08:00:00'), diff=target-now;
+    if(diff<=0){ document.getElementById('cd-d').innerHTML='🎉'; document.getElementById('cd-h').innerHTML='出发'; document.getElementById('cd-m').innerHTML='啦'; clearInterval(cdTimer); return; }
+    document.getElementById('cd-d').innerHTML=String(Math.floor(diff/86400000)).padStart(2,'0');
+    document.getElementById('cd-h').innerHTML=String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+    document.getElementById('cd-m').innerHTML=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  }
+  tick(); cdTimer=setInterval(tick,30000); persistRoomData();
+}
+
+function gotoTab(i,btn){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('pg'+i).classList.add('active'); }
+function showInvite() { if(currentRoomCode) document.getElementById('roomCode').innerText = currentRoomCode; document.getElementById('inv-overlay').classList.add('show'); }
+function hideInv(){ document.getElementById('inv-overlay').classList.remove('show'); }
+function copyCode(){ if(currentRoomCode) navigator.clipboard?.writeText(currentRoomCode); toast('房间码已复制'); hideInv(); }
+function showRoomInfo() { if(currentRoomCode) toast(`房间码: ${currentRoomCode}`); else toast('尚未加入房间，请刷新页面重新加入'); }
+
+// 初始化
+(async function init() {
+  // 尝试从 localStorage 恢复上次加入的房间码
+  const lastRoomCode = localStorage.getItem('last_room_code');
+  if (lastRoomCode) {
+    const { data, error } = await supabase.from('travel_rooms').select('*').eq('code', lastRoomCode).single();
+    if (!error && data) {
+      currentRoomId = data.id;
+      currentRoomCode = data.code;
+      await loadRoomData(data);
+      startRealtimeSubscription();
+      toast(`欢迎回来，房间 ${lastRoomCode}`);
+      return;
     }
-    document.getElementById('cd-d').innerHTML = String(Math.floor(diff/86400000)).padStart(2,'0');
-    document.getElementById('cd-h').innerHTML = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
-    document.getElementById('cd-m').innerHTML = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
   }
-  tick(); cdTimer = setInterval(tick, 30000);
-  saveAll();
-}
-
-// ======================== 辅助函数 ========================
-function escapeHtml(str) { if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-function gotoTab(i,btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('pg'+i).classList.add('active'); }
-function showInvite() { document.getElementById('inv-overlay').classList.add('show'); }
-function hideInv() { document.getElementById('inv-overlay').classList.remove('show'); }
-function copyCode() { navigator.clipboard?.writeText('TRIP-2847'); toast('邀请码已复制'); hideInv(); }
-function cTab(tab, btn) { document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const ta=document.getElementById('c-text'),uz=document.getElementById('c-upz'); if(tab==='img'){ ta.style.display='none'; uz.classList.add('show'); } else { ta.style.display=''; uz.classList.remove('show'); } }
-function handleImg(ev) { const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=e=>{ window.imgData=e.target.result; document.getElementById('c-upz').innerHTML=`<img src="${window.imgData}" style="max-height:80px;border-radius:5px;"><div style="margin-top:4px;font-size:10px;">点击重新选择</div><input type="file" id="c-file" style="display:none;" onchange="handleImg(event)"/>`; }; reader.readAsDataURL(f); }
-function filt(type) { curFilt=type; document.querySelectorAll('[id^="cp-"]').forEach(c=>c.className='chip'); const map={all:'ca',restaurant:'cr',attraction:'cat',hotel:'ch'}; const el=document.getElementById('cp-'+ (type==='all'?'a':type[0])); if(el) el.classList.add(map[type]||'ca'); renderPlaces(); }
-
-// ======================== 初始化 ========================
-async function init() {
-  if (!loadAll()) {
-    // 默认数据
-    membersData = [{name:'你',city:'上海'},{name:'小林',city:'杭州'},{name:'阿杰',city:'南京'}];
-    places = {
-      "宽窄巷子": { name:"宽窄巷子", type:"attraction", note:"历史街区", mentions:["小林"], inPlan:false },
-      "锦里古街": { name:"锦里古街", type:"attraction", note:"夜晚氛围极佳", mentions:["小林"], inPlan:false },
-      "龙抄手(宽窄巷子)": { name:"龙抄手(宽窄巷子)", type:"restaurant", note:"皮薄馅多", mentions:["小林"], inPlan:false },
-      "春熙路民宿": { name:"春熙路民宿", type:"hotel", note:"交通便利", mentions:["阿杰"], inPlan:false }
-    };
-    targetCity = '成都';
-    planItems = [];
-    saveAll();
-  }
-  renderMembersList();
-  renderPlaces();
-  if (targetCity) {
-    document.getElementById('target-city').value = targetCity;
-    document.getElementById('main-badge').textContent = targetCity;
-    await fetchWeather(targetCity);
-    await fetchTransport(targetCity);
-  }
-  onDateChange();
-  updateGenBtn();
-  renderMiniPlan();
-  renderFullPlan();
-}
-init();
+  showRoomModal();
+})();
 </script>
 </body>
 </html>
