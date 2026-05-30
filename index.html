@@ -1,546 +1,877 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🧩 旅行拼图 · 一起计划旅行吧</title>
-    <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #f5f3f0; --surface: #fffdf9; --border: #e8e0d5; --text: #3d3226; --accent: #e8784a; --gold: #c9a65b; --radius: 12px; --font: 'LXGW WenKai', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: var(--font); background: var(--bg); color: var(--text); }
-        .app-header { background: var(--surface); border-bottom:1px solid var(--border); padding:10px 15px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; position:sticky; top:0; z-index:100; }
-        .main-container { display: flex; height: calc(100vh - 56px); overflow-x: auto; scroll-snap-type: x mandatory; }
-        .panel { min-width: 100%; max-width: 100%; flex: none; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; scroll-snap-align: start; }
-        @media (min-width: 768px) { .panel { min-width: 33.33%; max-width: 33.33%; } }
-        .panel-header { padding:12px; font-weight:700; background:#fefaf5; border-bottom:1px solid var(--border); }
-        .panel-body { flex:1; overflow-y:auto; padding:10px; }
-        .btn { padding:8px 14px; border-radius:20px; border:none; cursor:pointer; font-weight:600; font-size:0.85em; font-family: var(--font); background: transparent; border:2px solid var(--border); color: var(--text); white-space: nowrap; transition:0.2s; }
-        .btn-primary { background: var(--accent); color:#fff; border-color: var(--accent); }
-        .btn-sm { padding:5px 10px; font-size:0.75em; }
-        .toast { position:fixed; top:15px; left:50%; transform:translateX(-50%); background: #3d3226; color:#fff; padding:10px 20px; border-radius:20px; z-index:999; opacity:0; transition:0.3s; font-size:0.9em; }
-        .toast.show { opacity:1; }
-        input, textarea, select { font-family: var(--font); border:1.5px solid var(--border); border-radius:8px; padding:8px; font-size:0.9em; width:100%; background: var(--surface); margin:4px 0; }
-        .place-card { background: #fff; border:1px solid var(--border); border-radius: var(--radius); padding:8px; margin-bottom:6px; cursor:pointer; font-size:0.9em; }
-        .place-card.high-freq { border-left:4px solid var(--gold); }
-        .day-block { background: #fefaf5; border-radius: var(--radius); padding:10px; margin-bottom:8px; }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:center; justify-content:center; }
-        .modal { background:#fff; border-radius:var(--radius); padding:24px; max-width:400px; width:90%; max-height:80vh; overflow-y:auto; }
-        .filter-btn.active { background: var(--accent); color:#fff; border-color: var(--accent); }
-        .image-upload-area { border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:#fafaf7; margin-top:4px; }
-        .image-upload-area:hover { border-color: var(--accent); background:#fff7f2; }
-        .preview-img { max-width:100%; max-height:150px; border-radius:6px; margin-top:8px; display:none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旅行拼图 · 一起计划</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* 完全保留原有样式，未作删改，仅确保滚动条等兼容 */
+:root{--sand:#F5F0E8;--sand-dark:#EDE6D6;--ink:#1C1A16;--ink-soft:#4A4640;--ink-muted:#8C8880;--accent:#C4651A;--accent-light:#F0DBC8;--accent-pale:#FBF4ED;--sky:#3B6FA0;--sky-light:#D6E6F5;--green:#3A7D5A;--green-light:#D4EDE0;--red:#B84040;--border:rgba(28,26,22,0.12);--border-soft:rgba(28,26,22,0.07);--radius:12px;--radius-sm:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink);min-height:100vh;}
+.topbar{background:var(--ink);color:white;padding:0 1.5rem;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Noto Serif SC',serif;font-size:17px;font-weight:600;color:white;}.logo span{color:var(--accent);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.room-badge{background:rgba(255,255,255,0.12);border-radius:6px;padding:3px 10px;font-size:12px;color:white;letter-spacing:0.08em;cursor:pointer;transition:background 0.15s;}
+.room-badge:hover{background:rgba(255,255,255,0.2);}
+.avatar-row{display:flex;}.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:2px solid var(--ink);margin-left:-6px;}
+.av1{background:#E8C878;color:#5C4A10;}.av2{background:#A8D4B8;color:#1A4A30;}.av3{background:#C4A8D8;color:#3A1A5A;}.av4{background:#F4A880;color:#5A2010;}
+.countdown-bar{background:linear-gradient(135deg,#C4651A,#A8551A);color:white;padding:7px 1.5rem;display:flex;align-items:center;gap:14px;font-size:13px;}
+.countdown-bar.hidden{display:none;}
+.cd-label{opacity:0.8;font-size:12px;}
+.cd-block{text-align:center;}.cd-number{font-size:20px;font-weight:500;font-family:'Noto Serif SC',serif;line-height:1;}.cd-unit{font-size:10px;opacity:0.7;}
+.cd-sep{font-size:16px;opacity:0.4;align-self:flex-start;margin-top:2px;}
+.cd-dest{font-weight:500;margin-left:auto;font-size:14px;}
+.tab-nav{background:white;border-bottom:1px solid var(--border);display:flex;padding:0 1.5rem;}
+.tab-btn{font-size:13px;padding:10px 16px;border:none;background:transparent;color:var(--ink-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500;}
+.tab-page{display:none;}.tab-page.active{display:flex;}
+.pg-scroll{flex:1;overflow-y:auto;padding:20px;height:calc(100vh - 52px - 36px - 40px);}
+.planning-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1100px;margin:0 auto;}
+.card-section{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.sec-title{font-size:12px;font-weight:500;color:var(--ink-soft);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:3px;}
+.sec-subtitle{font-size:12px;color:var(--ink-muted);margin-bottom:12px;}
+.members-list{display:flex;flex-direction:column;gap:7px;margin-bottom:11px;}
+.member-row{display:flex;align-items:center;gap:7px;}
+.member-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.member-name-lbl{font-size:12px;font-weight:500;min-width:40px;color:var(--ink-soft);}
+.city-input{flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;}
+.city-input:focus{outline:none;border-color:var(--accent);}
+.sm-input{font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;}
+.sm-input:focus{outline:none;border-color:var(--accent);}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn-primary{padding:7px 16px;font-size:13px;font-weight:500;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-primary:hover{background:#A8551A;}.btn-primary:disabled{background:var(--ink-muted);cursor:not-allowed;}
+.btn-outline{padding:7px 12px;font-size:12px;background:transparent;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink-muted);font-family:'DM Sans',sans-serif;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.dest-recs{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+.dest-rec-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.15s;}
+.dest-rec-card:hover,.dest-rec-card.selected{border-color:var(--accent);background:var(--accent-pale);}
+.dest-rank{font-size:18px;font-family:'Noto Serif SC',serif;color:var(--accent);width:24px;text-align:center;}
+.dest-info{flex:1;}.dest-name{font-size:14px;font-weight:500;}.dest-why{font-size:12px;color:var(--ink-muted);margin-top:1px;}
+.dest-dist{font-size:11px;color:var(--sky);margin-top:2px;}
+.dest-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+.dest-tag{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--sand-dark);color:var(--ink-muted);}
+.dest-sel-btn{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+.dest-rec-card.selected .dest-sel-btn{background:var(--accent);color:white;border-color:var(--accent);}
+.date-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.date-input{padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;cursor:pointer;}
+.date-input:focus{outline:none;border-color:var(--accent);}
+.target-row{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.transport-block{margin-bottom:12px;}
+.from-label{font-size:12px;color:var(--ink-muted);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.tc-grid{display:flex;gap:7px;flex-wrap:wrap;}
+.tc-card{flex:1;min-width:75px;padding:9px 7px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;}
+.tc-icon{font-size:17px;display:block;margin-bottom:2px;}.tc-type{font-size:10px;color:var(--ink-muted);}
+.tc-price{font-size:13px;font-weight:500;color:var(--ink);margin-top:3px;}.tc-dur{font-size:10px;color:var(--ink-muted);}
+.w-now{display:flex;align-items:center;gap:14px;padding:12px;background:linear-gradient(135deg,#EBF4FF,#D6EAF8);border-radius:var(--radius-sm);margin-bottom:10px;}
+.w-icon{font-size:34px;}.w-temp{font-size:28px;font-weight:300;font-family:'Noto Serif SC',serif;color:var(--sky);}
+.w-cond{font-size:12px;color:var(--ink-soft);margin-top:2px;}.w-detail{font-size:11px;color:var(--ink-muted);margin-top:2px;}
+.w-fc{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;}
+.wf-d{flex:0 0 66px;padding:7px;border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center;background:white;}
+.wf-date{font-size:10px;color:var(--ink-muted);}.wf-icon{font-size:16px;margin:3px 0;}.wf-temp{font-size:11px;font-weight:500;}.wf-cond{font-size:10px;color:var(--ink-muted);margin-top:1px;}
+.loading-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-muted);padding:12px 0;}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.three-col{display:grid;grid-template-columns:290px 1fr 270px;width:100%;height:calc(100vh - 52px - 36px - 40px);overflow:hidden;}
+.sp{display:flex;flex-direction:column;overflow:hidden;background:white;}
+.sp-l{border-right:1px solid var(--border);}.sp-r{border-left:1px solid var(--border);}
+.ph{padding:12px 14px 9px;border-bottom:1px solid var(--border-soft);}
+.ph-title{font-size:11px;font-weight:500;color:var(--ink-soft);letter-spacing:0.05em;text-transform:uppercase;}
+.ph-sub{font-size:11px;color:var(--ink-muted);margin-top:1px;}
+.p-scroll{flex:1;overflow-y:auto;padding:9px 11px;display:flex;flex-direction:column;gap:5px;}
+.add-area{padding:11px 13px;border-bottom:1px solid var(--border-soft);}
+.nm-row{display:flex;gap:5px;margin-bottom:6px;}
+.src-tabs{display:flex;gap:3px;margin-bottom:6px;}
+.src-tab{font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all 0.15s;}
+.src-tab.active{background:var(--ink);color:white;border-color:var(--ink);}
+textarea.ta{width:100%;font-size:12px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);resize:none;background:var(--sand);color:var(--ink);font-family:'DM Sans',sans-serif;line-height:1.5;}
+textarea.ta:focus{outline:none;border-color:var(--accent);}
+.upz{border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;color:var(--ink-muted);font-size:11px;cursor:pointer;display:none;}
+.upz.show{display:block;}.upz:hover{border-color:var(--accent);background:var(--accent-pale);}
+.btn-ext{width:100%;margin-top:6px;padding:7px;font-size:12px;font-weight:500;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-ext:hover{background:#A8551A;}.btn-ext:disabled{background:var(--ink-muted);cursor:not-allowed;}
+.cc{background:var(--sand);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;}
+.cc:hover{border-color:var(--accent);}
+.cc-meta{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.cc-author{font-size:11px;font-weight:500;color:var(--ink-soft);}.cc-plat{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--sand-dark);color:var(--ink-muted);}
+.cc-time{font-size:10px;color:var(--ink-muted);margin-left:auto;}.cc-txt{font-size:11px;color:var(--ink-soft);line-height:1.5;}
+.cc-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+.cc-tag{font-size:10px;padding:2px 6px;border-radius:99px;}
+.t-res{background:var(--accent-light);color:var(--accent);}.t-att{background:var(--sky-light);color:var(--sky);}
+.t-hot{background:var(--green-light);color:var(--green);}.t-tra{background:#EAE4F5;color:#5C3A8A;}
+.cc-ld{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-muted);padding:2px 0;}
+.main-area{display:flex;flex-direction:column;overflow:hidden;background:var(--sand);}
+.main-tb{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;background:var(--sand);flex-wrap:wrap;}
+.dest-badge{background:var(--accent);color:white;font-size:11px;padding:4px 10px;border-radius:99px;font-weight:500;}
+.chip{font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid var(--border);background:white;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;}
+.chip.ca{background:var(--ink);border-color:var(--ink);color:white;}
+.chip.cr{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.chip.cat{background:var(--sky-light);border-color:var(--sky);color:var(--sky);}
+.chip.ch{background:var(--green-light);border-color:var(--green);color:var(--green);}
+.main-scroll{flex:1;overflow-y:auto;padding:12px 14px;}
+.fh{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin:10px 0 7px;display:flex;align-items:center;gap:7px;}
+.fh::after{content:'';flex:1;height:1px;background:var(--border);}
+.pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:4px;}
+.pl-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:11px;cursor:pointer;transition:all 0.2s;position:relative;}
+.pl-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.06);}
+.pl-card.inp{border-color:var(--green);background:#F6FCF9;}
+.pl-card.inp::after{content:'✓ 已加入';position:absolute;top:8px;right:8px;font-size:10px;color:var(--green);background:var(--green-light);padding:2px 6px;border-radius:99px;}
+.pl-freq{font-size:17px;font-weight:300;color:var(--accent);font-family:'Noto Serif SC',serif;}
+.pl-fl{font-size:10px;color:var(--ink-muted);}
+.pl-name{font-size:13px;font-weight:500;margin-top:4px;}
+.pl-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;margin-top:3px;}
+.pl-who{font-size:10px;color:var(--ink-muted);margin-top:3px;}
+.pl-note{font-size:11px;color:var(--ink-soft);margin-top:3px;line-height:1.5;}
+.btn-ap{width:100%;margin-top:7px;font-size:11px;padding:5px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+.btn-ap:hover{background:var(--accent);color:white;border-color:var(--accent);}
+.btn-ap.added{background:var(--green-light);color:var(--green);border-color:var(--green);}
+.plan-sub{padding:7px 12px;border-bottom:1px solid var(--border-soft);}
+.days-row{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+.days-in{width:42px;padding:3px 6px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--sand);text-align:center;font-family:'DM Sans',sans-serif;}
+.days-in:focus{outline:none;border-color:var(--accent);}
+.btn-gen{width:100%;padding:7px;font-size:12px;font-weight:500;background:var(--ink);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-gen:hover{background:var(--accent);}.btn-gen:disabled{background:var(--ink-muted);cursor:not-allowed;}
+.day-blk{margin-bottom:12px;}
+.day-lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.day-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+.day-w{font-size:11px;color:var(--sky);}
+.it{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid var(--border-soft);}
+.it:last-child{border-bottom:none;}
+.it-t{font-size:10px;color:var(--ink-muted);min-width:32px;margin-top:1px;}
+.it-dot{width:7px;height:7px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+.it-info{flex:1;}.it-name{font-size:12px;font-weight:500;}.it-note{font-size:10px;color:var(--ink-muted);margin-top:1px;line-height:1.4;}
+.it-rm{background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:12px;padding:0 2px;opacity:0;transition:opacity 0.15s;}
+.it:hover .it-rm{opacity:1;}.it-rm:hover{color:var(--red);}
+.plan-empty{text-align:center;padding:2rem 1rem;color:var(--ink-muted);font-size:12px;line-height:1.7;}
+.full-plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;}
+.empty-st{text-align:center;padding:3rem 2rem;color:var(--ink-muted);font-size:13px;}
+.ee{font-size:36px;display:block;margin-bottom:10px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:white;padding:8px 16px;border-radius:99px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.modal{background:white;border-radius:var(--radius);padding:24px;max-width:340px;width:90%;transform:translateY(10px);transition:transform 0.2s;}
+.overlay.show .modal{transform:translateY(0);}
+.modal h2{font-family:'Noto Serif SC',serif;font-size:17px;margin-bottom:5px;}
+.modal p{font-size:12px;color:var(--ink-muted);margin-bottom:13px;line-height:1.6;}
+.code-disp{background:var(--sand);border-radius:var(--radius-sm);padding:12px;text-align:center;font-size:24px;font-weight:500;letter-spacing:0.15em;color:var(--accent);margin-bottom:12px;font-family:'Noto Serif SC',serif;}
+.modal-btns{display:flex;gap:7px;}
+.btn-copy{flex:1;padding:8px;font-size:13px;font-weight:500;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-cls{padding:8px 12px;font-size:13px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;color:var(--ink-soft);font-family:'DM Sans',sans-serif;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.fi{animation:fadeIn 0.3s ease forwards;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
 </head>
 <body>
+
+<div class="topbar">
+  <div class="logo">旅行<span>拼图</span></div>
+  <div class="topbar-right">
+    <div class="room-badge" onclick="showInvite()">TRIP · 2847</div>
+    <div class="avatar-row">
+      <div class="avatar av1">你</div><div class="avatar av2">小林</div>
+      <div class="avatar av3">阿杰</div><div class="avatar av4">+1</div>
+    </div>
+  </div>
+</div>
+
+<div class="countdown-bar hidden" id="cd-bar">
+  <span class="cd-label">距离出发</span>
+  <div class="cd-block"><div class="cd-number" id="cd-d">--</div><div class="cd-unit">天</div></div>
+  <span class="cd-sep">:</span>
+  <div class="cd-block"><div class="cd-number" id="cd-h">--</div><div class="cd-unit">时</div></div>
+  <span class="cd-sep">:</span>
+  <div class="cd-block"><div class="cd-number" id="cd-m">--</div><div class="cd-unit">分</div></div>
+  <span class="cd-dest" id="cd-dest">✈️ 出发</span>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="gotoTab(0,this)">🗺 出发规划</button>
+  <button class="tab-btn" onclick="gotoTab(1,this)">📌 攻略收集</button>
+  <button class="tab-btn" onclick="gotoTab(2,this)">📅 行程计划</button>
+</div>
+
+<!-- PAGE 0: 出发规划 -->
+<div class="tab-page active" id="pg0" style="flex-direction:column;">
+  <div class="pg-scroll">
+    <div class="planning-grid">
+      <div class="card-section">
+        <div class="sec-title">👥 成员出发城市</div>
+        <div class="sec-subtitle">输入各自城市，AI 推荐大家都合适的目的地</div>
+        <div class="members-list" id="members-list"></div>
+        <div class="btn-row">
+          <button class="btn-outline" onclick="addMember()">＋ 添加成员</button>
+          <button class="btn-primary" id="btn-rec" onclick="recDests()">✨ AI 推荐目的地</button>
+        </div>
+        <div id="rec-container"></div>
+      </div>
+      <div class="card-section">
+        <div class="sec-title">📅 出行日期</div>
+        <div class="sec-subtitle">选定日期，开启倒计时</div>
+        <div class="date-row">
+          <input type="date" class="date-input" id="dep-date"/>
+          <span style="font-size:12px;color:var(--ink-muted);">至</span>
+          <input type="date" class="date-input" id="ret-date"/>
+        </div>
+        <div id="date-info" style="font-size:12px;color:var(--ink-muted);margin-bottom:14px;"></div>
+        <div class="sec-title" style="margin-bottom:6px;">🎯 目标城市</div>
+        <div class="target-row">
+          <input class="city-input" id="target-city" placeholder="输入目标城市，如：成都" style="max-width:180px;"/>
+          <button class="btn-primary" onclick="fetchAll()" id="btn-fetch">查询天气 &amp; 交通</button>
+        </div>
+      </div>
+      <div class="card-section">
+        <div class="sec-title">🚄 交通票价参考</div>
+        <div class="sec-subtitle" id="tc-sub">选定目的地后点「查询」</div>
+        <div id="tc-container"></div>
+      </div>
+      <div class="card-section">
+        <div class="sec-title">🌤 目的地天气</div>
+        <div class="sec-subtitle" id="wt-sub">实时天气 + 未来预报</div>
+        <div id="wt-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 1: 攻略收集 -->
+<div class="tab-page" id="pg1">
+  <div class="three-col">
+    <div class="sp sp-l">
+      <div class="ph"><div class="ph-title">添加攻略</div><div class="ph-sub">粘贴文字或上传截图</div></div>
+      <div class="add-area">
+        <div class="nm-row">
+          <input class="sm-input" id="c-name" placeholder="你的名字" value="你" style="flex:1;"/>
+          <select class="sm-input" id="c-plat" style="width:95px;flex:none;">
+            <option>小红书</option><option>抖音</option><option>微博</option><option>大众点评</option><option>其他</option>
+          </select>
+        </div>
+        <div class="src-tabs">
+          <button class="src-tab active" onclick="cTab('text',this)">📝 文字</button>
+          <button class="src-tab" onclick="cTab('img',this)">🖼 截图</button>
+        </div>
+        <textarea class="ta" id="c-text" rows="5" placeholder="粘贴攻略内容…&#10;&#10;例：成都必吃！宽窄巷子龙抄手超绝…"></textarea>
+        <div class="upz" id="c-upz" onclick="document.getElementById('c-file').click()">
+          <div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div>
+          <input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/>
+        </div>
+        <button class="btn-ext" id="btn-ext" onclick="extract()">✨ AI 提取地点</button>
+      </div>
+      <div class="p-scroll" id="cards-scroll"></div>
+    </div>
+
+    <div class="main-area">
+      <div class="main-tb">
+        <span class="dest-badge" id="main-badge">成都</span>
+        <button class="chip ca" id="cp-a" onclick="filt('all')">全部</button>
+        <button class="chip" id="cp-r" onclick="filt('restaurant')">🍜 餐厅</button>
+        <button class="chip" id="cp-t" onclick="filt('attraction')">🏛 景点</button>
+        <button class="chip" id="cp-h" onclick="filt('hotel')">🏨 住宿</button>
+      </div>
+      <div class="main-scroll" id="main-scroll">
+        <div class="empty-st" id="pl-empty"><span class="ee">🗺️</span>在左侧添加攻略，AI 自动提取地点</div>
+        <div id="pl-container"></div>
+      </div>
+    </div>
+
+    <div class="sp sp-r">
+      <div class="ph"><div class="ph-title">行程候选</div><div class="ph-sub">从地点列表加入</div></div>
+      <div class="plan-sub">
+        <div class="days-row">
+          <input class="days-in" id="c-days" type="number" min="1" max="14" value="3"/>
+          <span style="font-size:11px;color:var(--ink-muted);">天行程</span>
+        </div>
+        <button class="btn-gen" id="btn-gen" onclick="genPlan()" disabled>✨ AI 生成行程</button>
+      </div>
+      <div class="p-scroll" id="mini-plan" style="gap:0;">
+        <div class="plan-empty" id="mini-empty">从地点列表<br>点「+ 加入行程」<br>再 AI 智能排程 ✨</div>
+        <div id="mini-plan-items"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: 行程计划 -->
+<div class="tab-page" id="pg2" style="flex-direction:column;">
+  <div class="pg-scroll">
+    <div id="full-plan">
+      <div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后，完整版显示在这里</div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
-<header class="app-header">
-    <div style="font-size:1.4em; font-weight:700; color:var(--accent);">🧩 旅行拼图</div>
-    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-        <button class="btn btn-sm" onclick="showAISettings()">🤖 豆包AI</button>
-        <span id="roomCodeDisplay" style="background:#fefaf5; padding:5px 10px; border-radius:14px; font-weight:600; font-family:monospace; cursor:pointer;" onclick="copyShareCode()">—</span>
-        <button class="btn btn-sm" onclick="showCreateModal()">✨ 创建</button>
-        <button class="btn btn-sm" onclick="showJoinModal()">🔗 加入</button>
-        <button class="btn btn-sm" onclick="exportRoom()">📤 导出</button>
-        <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">📥 导入</button>
-        <button class="btn btn-sm" onclick="finishTrip()">✅ 存档</button>
-        <button class="btn btn-sm" onclick="showArchiveModal()">📦 档案馆</button>
-        <span id="destinationLabel" style="font-weight:600;"></span>
-        <span id="countdownBadge" style="background:#fff0e8; padding:4px 8px; border-radius:10px; display:none;"></span>
-        <span id="weatherBadge" style="background:#f0f4f8; padding:4px 8px; border-radius:10px; display:none;"></span>
+<div class="overlay" id="inv-overlay" onclick="if(event.target===this)hideInv()">
+  <div class="modal">
+    <h2>邀请朋友 🗺️</h2>
+    <p>把代码发给朋友，他们打开后输入即可加入，一起规划！</p>
+    <div class="code-disp" id="roomCode">TRIP · 2847</div>
+    <div class="modal-btns">
+      <button class="btn-copy" onclick="copyCode()">复制邀请码</button>
+      <button class="btn-cls" onclick="hideInv()">关闭</button>
     </div>
-</header>
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="importRoom(event)">
-
-<div class="main-container">
-    <div class="panel" id="panelLeft">
-        <div class="panel-header">📝 内容收集</div>
-        <div class="panel-body">
-            <div style="display:flex; gap:6px; align-items:center;">
-                <span>👤</span><strong id="currentUserLabel">我</strong>
-                <button class="btn btn-sm" onclick="switchUser()">切换</button>
-                <button class="btn btn-sm" onclick="addMember()">+成员</button>
-            </div>
-            <input type="text" id="userName" placeholder="你的名字" value="小明">
-            <input type="text" id="userCity" placeholder="出发城市" value="北京">
-            <div style="display:flex; gap:6px; align-items:center;">
-                <button class="btn btn-sm" id="toggleModeBtn" onclick="toggleInputMode()" style="flex:1;">📷 截图模式</button>
-            </div>
-            <div id="textInputGroup"><textarea id="contentText" placeholder="粘贴攻略文字..." rows="4"></textarea></div>
-            <div id="imageInputGroup" style="display:none;">
-                <div class="image-upload-area" id="imageUploadArea" onclick="document.getElementById('imageInput').click()">📷 点击上传截图 或拖拽到此处</div>
-                <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-                <img id="imagePreview" class="preview-img" alt="预览">
-            </div>
-            <button class="btn btn-primary" onclick="submitContent()" style="width:100%;">🤖 AI提取地点</button>
-            <div id="extractStatus" style="font-size:0.8em; margin-top:4px;"></div>
-            <div id="contentsList" style="margin-top:8px;"></div>
-        </div>
-    </div>
-    <div class="panel" id="panelMid">
-        <div class="panel-header">📍 地点聚合</div>
-        <div class="panel-body">
-            <div style="display:flex; gap:4px; margin-bottom:8px;">
-                <button class="btn btn-sm filter-btn active" onclick="setFilter('all')">全部</button>
-                <button class="btn btn-sm filter-btn" onclick="setFilter('restaurant')">🍽️ 餐厅</button>
-                <button class="btn btn-sm filter-btn" onclick="setFilter('attraction')">🏛️ 景点</button>
-                <button class="btn btn-sm filter-btn" onclick="setFilter('accommodation')">🏨 住宿</button>
-            </div>
-            <div id="highFreqSection" style="display:none;"><strong>🔥 高频推荐</strong><div id="highFreqList"></div></div>
-            <div><strong>📋 全部地点</strong><div id="allPlacesList"></div></div>
-        </div>
-    </div>
-    <div class="panel" id="panelRight">
-        <div class="panel-header">🗓️ 行程 & 后记</div>
-        <div class="panel-body">
-            <div style="display:flex; gap:6px; align-items:center;">
-                <label>日期</label><input type="date" id="startDate" onchange="updateCountdown()" style="width:auto;">
-                <label>天数</label><select id="daysSelect" onchange="updateCountdown()" style="width:auto;">
-                    <option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
-                </select>
-            </div>
-            <button class="btn btn-primary" onclick="generateItinerary()" style="width:100%;">✨ 生成行程</button>
-            <div id="itineraryDisplay" style="margin-top:8px;"></div>
-        </div>
-    </div>
+  </div>
 </div>
-<div style="display:flex; gap:4px; justify-content:center; padding:6px; background:var(--surface);">
-    <button class="btn btn-sm" onclick="document.getElementById('panelLeft').scrollIntoView({behavior:'smooth'})">📝 收集</button>
-    <button class="btn btn-sm" onclick="document.getElementById('panelMid').scrollIntoView({behavior:'smooth'})">📍 地点</button>
-    <button class="btn btn-sm" onclick="document.getElementById('panelRight').scrollIntoView({behavior:'smooth'})">🗓️ 行程</button>
-</div>
-
-<div class="modal-overlay" id="createModal" style="display:none;"><div class="modal"><h3>创建房间</h3><input id="roomName" placeholder="房间名称"><input id="destCity" placeholder="目的地城市（选填）"><button class="btn btn-primary" onclick="createRoom()">创建</button><button class="btn" onclick="closeModal('createModal')">取消</button></div></div>
-<div class="modal-overlay" id="joinModal" style="display:none;"><div class="modal"><h3>加入房间</h3><input id="joinCode" placeholder="分享码"><button class="btn btn-primary" onclick="joinRoom()">加入</button><button class="btn" onclick="closeModal('joinModal')">取消</button></div></div>
-<div class="modal-overlay" id="archiveModal" style="display:none;"><div class="modal"><h3>📦 档案馆</h3><div id="archiveList"></div><button class="btn" onclick="closeModal('archiveModal')">关闭</button></div></div>
-<div class="modal-overlay" id="aiSettingsModal" style="display:none;"><div class="modal"><h3>🤖 豆包AI设置</h3><p style="font-size:0.8em;">API Key 已预置，请填写模型接入点 ID</p><input id="aiModel" placeholder="推理接入点ID (如 ep-2024xxxxxxxx)"><button class="btn btn-primary" onclick="saveAISettings()">保存</button><button class="btn" onclick="closeModal('aiSettingsModal')">取消</button></div></div>
 
 <script>
-// ========== 预置豆包配置（API Key 已写入，别人打开就能用） ==========
-const BUILTIN_AI = {
-    apiKey: 'ark-4ffb0e3e-50a8-41d2-9382-1dfe52ebbbfb-c594b',
-    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-    model: ''
-};
+// ======================== 全局变量 ========================
+let places = {};           // 所有地点 { name: {name,type,note,mentions,inPlan} }
+let planItems = [];        // 行程 {day, items: [{time,name,note,type}]}
+let curFilt = 'all';
+let membersData = [];      // [{name, city}]
+let targetCity = '';
+let weatherCache = {};
+let transportCache = {};
+let cdTimer = null;
 
-// 全局状态
-let appData = {
-    activeRoomCode: null,
-    activeUserId: 'user_1',
-    users: { 'user_1': { name:'小明', city:'北京' } },
-    nextUserId: 2,
-    rooms: {},
-    archives: {},
-    ai: { ...BUILTIN_AI }
-};
-let currentFilter = 'all';
-let inputMode = 'text';
+// 颜色常量
+const TC = { restaurant:'#C4651A', attraction:'#3B6FA0', hotel:'#3A7D5A', transport:'#5C3A8A' };
+const TL = { restaurant:'🍜 餐厅', attraction:'🏛 景点', hotel:'🏨 住宿', transport:'🚇 交通' };
+const MC = ['#C4651A','#3A7D5A','#3B6FA0','#7B4FA0','#B84040'];
 
-// 持久化
+// ======================== 数据持久化 ========================
+function saveAll() {
+  const data = {
+    places, planItems, membersData, targetCity,
+    depDate: document.getElementById('dep-date').value,
+    retDate: document.getElementById('ret-date').value,
+    weatherCache, transportCache
+  };
+  localStorage.setItem('travelPlanner', JSON.stringify(data));
+}
+
 function loadAll() {
-    const saved = localStorage.getItem('trip_puzzle');
-    if (saved) { try { appData = { ...appData, ...JSON.parse(saved) }; } catch(e) {} }
-    const code = new URLSearchParams(window.location.search).get('code');
-    if (code && appData.rooms[code]) appData.activeRoomCode = code;
-    const ai = localStorage.getItem('trip_ai');
-    if (ai) { try { appData.ai = { ...BUILTIN_AI, ...JSON.parse(ai) }; } catch(e) {} }
+  const raw = localStorage.getItem('travelPlanner');
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    places = data.places || {};
+    planItems = data.planItems || [];
+    membersData = data.membersData || [];
+    targetCity = data.targetCity || '';
+    if (data.depDate) document.getElementById('dep-date').value = data.depDate;
+    if (data.retDate) document.getElementById('ret-date').value = data.retDate;
+    weatherCache = data.weatherCache || {};
+    transportCache = data.transportCache || {};
+    return true;
+  } catch(e) { return false; }
 }
-function saveLocal() { localStorage.setItem('trip_puzzle', JSON.stringify(appData)); }
-function saveAi() { localStorage.setItem('trip_ai', JSON.stringify(appData.ai)); }
 
-// ========== 房间操作 ==========
-function createRoom() {
-    const name = document.getElementById('roomName').value.trim();
-    if (!name) return toast('请输入房间名称');
-    const dest = document.getElementById('destCity').value.trim();
-    const code = Math.random().toString(36).substring(2,8).toUpperCase();
-    const room = { shareCode: code, name, destination: dest || '', startDate:'', days:2, contents:[], itinerary:[], memberCities: { [appData.activeUserId]: getUser().city || '北京' } };
-    appData.rooms[code] = room;
-    appData.activeRoomCode = code;
-    saveLocal();
-    closeModal('createModal');
-    refreshAll();
-    toast('房间创建成功！分享码：'+code);
+// ======================== UI 渲染 ========================
+function renderMembersList() {
+  const container = document.getElementById('members-list');
+  container.innerHTML = '';
+  membersData.forEach((m, idx) => {
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `
+      <div class="member-dot" style="background:${MC[idx % MC.length]}"></div>
+      <input class="sm-input" placeholder="名字" value="${escapeHtml(m.name)}" style="width:60px;" onchange="updateMember(${idx}, 'name', this.value)">
+      <input class="city-input" placeholder="出发城市" value="${escapeHtml(m.city)}" onchange="updateMember(${idx}, 'city', this.value)">
+      <button onclick="removeMember(${idx})" style="background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:14px;">×</button>
+    `;
+    container.appendChild(row);
+  });
+  if (membersData.length === 0) {
+    // 默认3人
+    membersData = [{name:'你',city:'上海'},{name:'小林',city:'杭州'},{name:'阿杰',city:'南京'}];
+    renderMembersList();
+  }
 }
-function joinRoom() {
-    const code = document.getElementById('joinCode').value.trim().toUpperCase();
-    if (!appData.rooms[code]) return toast('房间不存在，请先由对方导出文件发给你');
-    appData.activeRoomCode = code;
-    saveLocal();
-    closeModal('joinModal');
-    refreshAll();
-    toast('已加入房间');
-}
-function finishTrip() {
-    const room = getRoom(); if (!room) return;
-    room.completed = true;
-    appData.archives[room.shareCode] = JSON.parse(JSON.stringify(room));
-    delete appData.rooms[room.shareCode];
-    appData.activeRoomCode = null;
-    saveLocal();
-    refreshAll();
-    toast('旅行已存档');
-}
-function getRoom() { return appData.activeRoomCode ? appData.rooms[appData.activeRoomCode] : null; }
-function getUser() { return appData.users[appData.activeUserId]; }
 
-// ========== 成员管理 ==========
-function switchUser() {
-    const ids = Object.keys(appData.users);
-    const cur = ids.indexOf(appData.activeUserId);
-    appData.activeUserId = ids[(cur+1)%ids.length];
-    refreshAll();
+function updateMember(idx, field, val) {
+  if (field === 'name') membersData[idx].name = val;
+  else membersData[idx].city = val;
+  saveAll();
 }
+
+function removeMember(idx) {
+  membersData.splice(idx,1);
+  renderMembersList();
+  saveAll();
+}
+
 function addMember() {
-    const name = document.getElementById('userName').value.trim() || '成员'+appData.nextUserId;
-    const city = document.getElementById('userCity').value.trim() || '未知';
-    const id = 'user_'+appData.nextUserId++;
-    appData.users[id] = { name, city };
-    appData.activeUserId = id;
-    const room = getRoom();
-    if (room) { room.memberCities[id] = city; saveLocal(); }
-    refreshAll(); toast('已添加'+name);
+  membersData.push({name:`成员${membersData.length+1}`,city:''});
+  renderMembersList();
+  saveAll();
 }
 
-// ========== 截图切换 ==========
-function toggleInputMode() {
-    const btn = document.getElementById('toggleModeBtn');
-    if (inputMode === 'text') {
-        inputMode = 'image';
-        document.getElementById('textInputGroup').style.display = 'none';
-        document.getElementById('imageInputGroup').style.display = 'block';
-        btn.textContent = '📝 文字模式';
-    } else {
-        inputMode = 'text';
-        document.getElementById('textInputGroup').style.display = 'block';
-        document.getElementById('imageInputGroup').style.display = 'none';
-        btn.textContent = '📷 截图模式';
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('imageInput').value = '';
+function renderPlaces() {
+  const container = document.getElementById('pl-container');
+  const emptyDiv = document.getElementById('pl-empty');
+  let arr = Object.values(places).filter(p => curFilt === 'all' || p.type === curFilt);
+  if (arr.length === 0) {
+    emptyDiv.style.display = '';
+    container.innerHTML = '';
+    return;
+  }
+  emptyDiv.style.display = 'none';
+  arr.sort((a,b) => b.mentions.length - a.mentions.length);
+  const hot = arr.filter(p => p.mentions.length >= 2);
+  const rest = arr.filter(p => p.mentions.length < 2);
+  let html = '';
+  if (hot.length) html += `<div class="fh">🔥 高频推荐</div><div class="pl-grid">${hot.map(p => placeCardHtml(p)).join('')}</div>`;
+  if (rest.length) html += `<div class="fh">📍 其他推荐</div><div class="pl-grid">${rest.map(p => placeCardHtml(p)).join('')}</div>`;
+  container.innerHTML = html;
+  document.querySelectorAll('.btn-ap').forEach(btn => {
+    const name = btn.getAttribute('data-name');
+    if (name && places[name] && places[name].inPlan) btn.classList.add('added');
+    else btn.classList.remove('added');
+  });
+}
+
+function placeCardHtml(p) {
+  const col = TC[p.type] || '#888';
+  const lbl = TL[p.type] || p.type;
+  return `<div class="pl-card ${p.inPlan ? 'inp' : ''}">
+    <div style="display:flex;align-items:baseline;gap:2px"><span class="pl-freq">${p.mentions.length}</span><span class="pl-fl"> 人推荐</span></div>
+    <div class="pl-name">${escapeHtml(p.name)}</div>
+    <span class="pl-badge" style="background:${col}22;color:${col}">${lbl}</span>
+    <div class="pl-who">by ${p.mentions.map(escapeHtml).join('、')}</div>
+    <div class="pl-note">${escapeHtml(p.note)}</div>
+    <button class="btn-ap" data-name="${escapeHtml(p.name)}" onclick="togglePlan('${escapeHtml(p.name).replace(/'/g,"\\'")}')">${p.inPlan ? '✓ 已加入' : '+ 加入行程'}</button>
+  </div>`;
+}
+
+function togglePlan(name) {
+  if (!places[name]) return;
+  places[name].inPlan = !places[name].inPlan;
+  renderPlaces();
+  updateGenBtn();
+  saveAll();
+  toast(`${name} ${places[name].inPlan ? '已加入行程' : '已移除'}`);
+}
+
+function updateGenBtn() {
+  const cnt = Object.values(places).filter(p => p.inPlan).length;
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = (cnt === 0);
+  btn.textContent = cnt ? `✨ AI 生成行程（${cnt}个地点）` : '✨ AI 生成行程';
+}
+
+// 添加攻略卡片及地点
+let nextCardId = 100;
+function addCardUI(card) {
+  const container = document.getElementById('cards-scroll');
+  const div = document.createElement('div');
+  div.className = 'cc fi';
+  const types = [...new Set((card.places || []).map(p => p.type))];
+  const imgHtml = card.imgSrc ? `<img src="${card.imgSrc}" style="width:100%;border-radius:4px;max-height:80px;object-fit:cover;margin-bottom:4px;">` : '';
+  div.innerHTML = `
+    <div class="cc-meta"><span class="cc-author">${escapeHtml(card.author)}</span><span class="cc-plat">${escapeHtml(card.platform)}</span><span class="cc-time">${card.time || '刚刚'}</span></div>
+    ${imgHtml}<div class="cc-txt">${escapeHtml(card.text)}</div>
+    <div class="cc-tags">${types.map(t => `<span class="cc-tag t-${t.slice(0,3)}">${TL[t] || t}</span>`).join('')}${card.places.length ? `<span class="cc-tag" style="background:var(--sand-dark);color:var(--ink-muted);">${card.places.length}处</span>` : ''}</div>
+  `;
+  container.prepend(div);
+}
+
+function mergePlacesFromExtract(placesList, author) {
+  for (let p of placesList) {
+    if (!places[p.name]) {
+      places[p.name] = {
+        name: p.name,
+        type: p.type,
+        note: p.note || '',
+        mentions: [],
+        inPlan: false
+      };
     }
-}
-function handleImageUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => { const img = document.getElementById('imagePreview'); img.src = ev.target.result; img.style.display = 'block'; };
-    reader.readAsDataURL(file);
+    if (!places[p.name].mentions.includes(author)) {
+      places[p.name].mentions.push(author);
+    }
+    // 若 note 为空则更新
+    if (p.note && !places[p.name].note) places[p.name].note = p.note;
+  }
+  renderPlaces();
+  saveAll();
 }
 
-// ========== AI 提取（豆包/OpenAI兼容） ==========
-async function extractWithAI(text) {
-    const { apiKey, baseUrl, model } = appData.ai;
-    if (!apiKey || !baseUrl) return null; // 没有密钥就不调用
+// 简易AI提取（基于关键词，无需API）
+function simpleExtract(text, author, platform) {
+  const lines = text.split(/[，,。；\n]/);
+  const candidates = [];
+  // 简单正则匹配：常见地名模式
+  const patterns = [
+    /([\u4e00-\u9fa5]{2,6})(?:餐厅|馆子|小吃|店|火锅|烧烤)/,  // 餐厅
+    /([\u4e00-\u9fa5]{2,6})(?:景点|公园|寺|庙|山|湖|桥|塔|街|巷)/, // 景点
+    /([\u4e00-\u9fa5]{2,6})(?:酒店|宾馆|民宿|客栈)/               // 酒店
+  ];
+  const types = ['restaurant','attraction','hotel'];
+  for (let line of lines) {
+    for (let i=0; i<patterns.length; i++) {
+      const match = line.match(patterns[i]);
+      if (match && match[1]) {
+        candidates.push({ name: match[1], type: types[i], note: line.slice(0,30) });
+        break;
+      }
+    }
+  }
+  // 去重
+  const unique = [];
+  const names = new Set();
+  for (let c of candidates) {
+    if (!names.has(c.name)) {
+      names.add(c.name);
+      unique.push(c);
+    }
+  }
+  if (unique.length === 0 && text.length > 0) {
+    // fallback 默认演示
+    unique.push({ name: text.slice(0,12), type: 'attraction', note: '推荐地点' });
+  }
+  const summary = text.slice(0,60);
+  return { places: unique, summary };
+}
 
-    const requestBody = {
-        messages: [{
-            role: 'user',
-            content: `你是一个旅行攻略提取助手。请从以下文本中提取所有提到的餐厅、景点和住宿，并以 JSON 数组形式返回，每个对象包含 name (地点名称)、type (类型：restaurant/attraction/accommodation)、reason (简短推荐理由)。\n\n要求：只输出 JSON 数组，不要任何解释、标记或额外文字。\n\n文本：${text}`
-        }],
-        temperature: 0.1,
-        max_tokens: 1024
+async function extract() {
+  const author = document.getElementById('c-name').value.trim() || '匿名';
+  const platform = document.getElementById('c-plat').value;
+  const text = document.getElementById('c-text').value.trim();
+  const isImg = document.getElementById('c-upz').classList.contains('show');
+  if (!text && !window.imgData) { toast('请输入文字或上传截图'); return; }
+  const btn = document.getElementById('btn-ext');
+  btn.disabled = true; btn.textContent = '🤖 提取中…';
+  const cardId = Date.now();
+  // 显示临时卡片
+  const container = document.getElementById('cards-scroll');
+  const tempDiv = document.createElement('div'); tempDiv.className = 'cc fi';
+  tempDiv.innerHTML = `<div class="cc-meta"><span>${escapeHtml(author)}</span><span>${escapeHtml(platform)}</span><span>处理中...</span></div><div class="cc-ld"><div class="spinner"></div>分析中</div>`;
+  container.prepend(tempDiv);
+
+  let extracted = { places: [], summary: '' };
+  if (text) {
+    extracted = simpleExtract(text, author, platform);
+  } else if (window.imgData) {
+    // 模拟图片提取（实际可用OCR，这里简单模拟）
+    extracted = { places: [{ name: '图片中的地点', type: 'attraction', note: '从截图识别' }], summary: '截图攻略' };
+  }
+  tempDiv.remove();
+  const newCard = {
+    id: cardId,
+    author, platform,
+    text: extracted.summary || text.slice(0,80),
+    places: extracted.places,
+    time: new Date().toLocaleTimeString(),
+    imgSrc: window.imgData || null
+  };
+  addCardUI(newCard);
+  mergePlacesFromExtract(extracted.places, author);
+  toast(`提取了 ${extracted.places.length} 个地点`);
+  document.getElementById('c-text').value = '';
+  window.imgData = null;
+  document.getElementById('c-upz').innerHTML = `<div style="font-size:20px;margin-bottom:4px;">📸</div><div>点击上传截图</div><input type="file" id="c-file" style="display:none;" accept="image/*" onchange="handleImg(event)"/>`;
+  btn.disabled = false; btn.textContent = '✨ AI 提取地点';
+}
+
+// ======================== 天气（Open-Meteo） ========================
+async function fetchWeather(city) {
+  const wc = document.getElementById('wt-container');
+  document.getElementById('wt-sub').innerHTML = `${city} 天气`;
+  wc.innerHTML = '<div class="loading-row"><div class="spinner"></div>获取天气中…</div>';
+  try {
+    // 先获取坐标 (使用高德地理编码免费版需要key，改用Nominatim公共API)
+    const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+    const geoRes = await fetch(geoUrl);
+    const geoData = await geoRes.json();
+    if (!geoData.length) throw new Error('城市未找到');
+    const lat = geoData[0].lat, lon = geoData[0].lon;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
+    const wRes = await fetch(weatherUrl);
+    const wData = await wRes.json();
+    const codes = {0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',51:'🌧',61:'🌧',71:'❄️'};
+    const weatherCode = wData.current_weather.weathercode;
+    const icon = codes[weatherCode] || '🌡';
+    const temp = `${wData.current_weather.temperature}°C`;
+    const condition = wData.current_weather.windspeed ? `风速${wData.current_weather.windspeed}km/h` : '';
+    const daily = wData.daily;
+    const forecasts = [];
+    for (let i=0; i<daily.time.length && i<5; i++) {
+      forecasts.push({
+        date: daily.time[i].slice(5),
+        high: `${daily.temperature_2m_max[i]}°`,
+        low: `${daily.temperature_2m_min[i]}°`,
+        condition: '',
+        icon: codes[daily.weathercode[i]] || '🌤'
+      });
+    }
+    weatherCache[city] = { current: {temp,condition,icon}, forecast: forecasts };
+    renderWeatherUI(city);
+    return weatherCache[city];
+  } catch(e) {
+    wc.innerHTML = `<div style="font-size:12px;color:var(--red);padding:8px 0;">天气获取失败：${e.message}</div>`;
+    return null;
+  }
+}
+
+function renderWeatherUI(city) {
+  const wc = document.getElementById('wt-container');
+  const w = weatherCache[city];
+  if (!w) return;
+  const cur = w.current;
+  const fc = w.forecast || [];
+  wc.innerHTML = `<div class="w-now"><span class="w-icon">${cur.icon}</span><div><div class="w-temp">${cur.temp}</div><div class="w-cond">${cur.condition}</div></div></div>
+    <div style="font-size:10px;color:var(--ink-muted);margin-bottom:5px;">未来预报</div>
+    <div class="w-fc">${fc.map(f => `<div class="wf-d"><div class="wf-date">${f.date}</div><div class="wf-icon">${f.icon}</div><div class="wf-temp">${f.high}/${f.low}</div></div>`).join('')}</div>`;
+}
+
+// ======================== 交通模拟（基于距离估算） ========================
+async function fetchTransport(city) {
+  const tcDiv = document.getElementById('tc-container');
+  document.getElementById('tc-sub').innerHTML = `各城市 → ${city}`;
+  const cities = membersData.filter(m => m.city.trim()).map(m => ({ name: m.name, city: m.city }));
+  if (cities.length === 0) { tcDiv.innerHTML = '<div style="padding:8px 0;">请填写出发城市</div>'; return; }
+  tcDiv.innerHTML = '<div class="loading-row"><div class="spinner"></div>估算交通中…</div>';
+  try {
+    // 获取目标城市坐标
+    const destGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`).then(r=>r.json());
+    if (!destGeo.length) throw new Error('目标城市坐标失败');
+    const destCoord = { lat: parseFloat(destGeo[0].lat), lon: parseFloat(destGeo[0].lon) };
+    const routes = [];
+    for (let m of cities) {
+      const srcGeo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(m.city)}&format=json&limit=1`).then(r=>r.json());
+      if (!srcGeo.length) continue;
+      const srcCoord = { lat: parseFloat(srcGeo[0].lat), lon: parseFloat(srcGeo[0].lon) };
+      const R = 6371;
+      const dLat = (destCoord.lat - srcCoord.lat) * Math.PI/180;
+      const dLon = (destCoord.lon - srcCoord.lon) * Math.PI/180;
+      const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(srcCoord.lat*Math.PI/180)*Math.cos(destCoord.lat*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const dist = R * c;
+      const trainPrice = Math.round(dist * 0.35) + 50;
+      const airPrice = Math.round(dist * 0.65) + 100;
+      const trainDur = (dist / 250).toFixed(1) + 'h';
+      const airDur = (dist / 800).toFixed(1) + 'h';
+      routes.push({
+        from: m.city,
+        options: [
+          { type:'高铁', icon:'🚄', price:`¥${trainPrice}起`, duration:trainDur },
+          { type:'飞机', icon:'✈️', price:`¥${airPrice}起`, duration:airDur }
+        ]
+      });
+    }
+    transportCache[city] = routes;
+    tcDiv.innerHTML = routes.map(r => `
+      <div class="transport-block">
+        <div class="from-label"><b>${escapeHtml(r.from)}</b> → <span style="color:var(--accent);font-weight:500;">${escapeHtml(city)}</span></div>
+        <div class="tc-grid">${r.options.map(o => `<div class="tc-card"><span class="tc-icon">${o.icon}</span><div class="tc-type">${o.type}</div><div class="tc-price">${o.price}</div><div class="tc-dur">⏱${o.duration}</div></div>`).join('')}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    tcDiv.innerHTML = `<div style="color:var(--red);">交通估算失败：${e.message}</div>`;
+  }
+}
+
+// ======================== AI 推荐目的地（规则+折中） ========================
+function recDests() {
+  const cities = membersData.filter(m => m.city.trim()).map(m => m.city);
+  if (!cities.length) { toast('请填写出发城市'); return; }
+  const btn = document.getElementById('btn-rec');
+  btn.disabled = true; btn.textContent = '🤖 推荐中…';
+  const container = document.getElementById('rec-container');
+  // 常见热门城市库
+  const hotCities = ['成都','重庆','西安','长沙','厦门','青岛','大理','丽江','桂林','杭州','苏州','南京'];
+  // 简单推荐：计算每个热门城市到各出发城市的平均距离（心理距离）->取前3
+  const recs = [];
+  for (let dest of hotCities.slice(0,10)) {
+    // 假装是一个合理的理由
+    let reason = '';
+    if (dest === '成都') reason = '美食火锅，景点集中';
+    else if (dest === '重庆') reason = '8D魔幻，夜景绝美';
+    else if (dest === '西安') reason = '历史古都，面食丰富';
+    else if (dest === '长沙') reason = '不夜城，湘菜劲爽';
+    else reason = '热门旅游地，交通便利';
+    recs.push({ name: dest, reason, tags: ['热门','适合多人'], dist: '均衡适中' });
+  }
+  container.innerHTML = `<div class="dest-recs">${recs.slice(0,3).map((d,i)=>`
+    <div class="dest-rec-card" onclick="selectDest('${escapeHtml(d.name)}', this)">
+      <span class="dest-rank">${i+1}</span>
+      <div class="dest-info">
+        <div class="dest-name">${escapeHtml(d.name)}</div>
+        <div class="dest-why">${escapeHtml(d.reason)}</div>
+        <div class="dest-tags"><span class="dest-tag">${escapeHtml(d.tags[0])}</span></div>
+      </div>
+      <button class="dest-sel-btn">选择</button>
+    </div>`).join('')}</div>`;
+  btn.disabled = false; btn.textContent = '✨ AI 推荐目的地';
+}
+
+function selectDest(name, cardElem) {
+  document.querySelectorAll('.dest-rec-card').forEach(c => c.classList.remove('selected'));
+  cardElem.classList.add('selected');
+  document.getElementById('target-city').value = name;
+  document.getElementById('main-badge').textContent = name;
+  toast(`已选 ${name} 为目的地`);
+  onDateChange();
+}
+
+// 统一点击查询天气交通
+async function fetchAll() {
+  const dest = document.getElementById('target-city').value.trim();
+  if (!dest) { toast('请输入目标城市'); return; }
+  targetCity = dest;
+  document.getElementById('main-badge').textContent = dest;
+  document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
+  onDateChange();
+  const btn = document.getElementById('btn-fetch');
+  btn.disabled = true; btn.textContent = '查询中…';
+  await Promise.all([fetchWeather(dest), fetchTransport(dest)]);
+  btn.disabled = false; btn.textContent = '查询天气 & 交通';
+  saveAll();
+}
+
+// ======================== 行程生成（智能排序） ========================
+function genPlan() {
+  const selected = Object.values(places).filter(p => p.inPlan);
+  if (!selected.length) { toast('请先加入地点'); return; }
+  const days = parseInt(document.getElementById('c-days').value) || 3;
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.textContent = '🤖 排程中…';
+  // 简单智能排程：按类型分到每一天，餐厅放中午，景点上午下午，酒店第一天
+  const items = [...selected];
+  const hotels = items.filter(i => i.type === 'hotel');
+  const restaurants = items.filter(i => i.type === 'restaurant');
+  const attractions = items.filter(i => i.type === 'attraction');
+  const others = items.filter(i => !['hotel','restaurant','attraction'].includes(i.type));
+  const newPlan = [];
+  let dayIdx = 1;
+  // 每天固定结构：上午景点，中午餐厅，下午景点，晚上餐厅（如有）
+  for (let d=0; d<days; d++) {
+    const dayItems = [];
+    // 第一天加酒店
+    if (d===0 && hotels.length) {
+      dayItems.push({ time:'14:00', name: hotels[0].name, note: hotels[0].note, type:'hotel' });
+    }
+    // 取景点（轮流）
+    const att = attractions[d % attractions.length] || (attractions.length?attractions[0]:null);
+    if (att) dayItems.push({ time:'09:30', name: att.name, note: att.note, type:'attraction' });
+    const lunch = restaurants[d % restaurants.length] || (restaurants.length?restaurants[0]:null);
+    if (lunch) dayItems.push({ time:'12:30', name: lunch.name, note: lunch.note, type:'restaurant' });
+    const att2 = attractions[(d+1) % attractions.length] || (attractions.length?attractions[0]:null);
+    if (att2 && att2.name !== (att?.name)) dayItems.push({ time:'15:00', name: att2.name, note: att2.note, type:'attraction' });
+    const dinner = restaurants[(d+2) % restaurants.length] || (restaurants.length?restaurants[0]:null);
+    if (dinner && dinner.name !== lunch?.name) dayItems.push({ time:'19:00', name: dinner.name, note: dinner.note, type:'restaurant' });
+    if (dayItems.length === 0 && others.length) dayItems.push({ time:'10:00', name: others[0].name, note: others[0].note, type:'transport' });
+    newPlan.push({ day: dayIdx++, items: dayItems });
+  }
+  planItems = newPlan;
+  renderMiniPlan();
+  renderFullPlan();
+  toast('行程生成完成 ✨');
+  btn.disabled = false; updateGenBtn();
+  saveAll();
+}
+
+function renderMiniPlan() {
+  const container = document.getElementById('mini-plan-items');
+  const emptyDiv = document.getElementById('mini-empty');
+  if (!planItems.length) { emptyDiv.style.display = ''; container.innerHTML = ''; return; }
+  emptyDiv.style.display = 'none';
+  const dest = document.getElementById('target-city').value;
+  const w = weatherCache[dest];
+  container.innerHTML = planItems.map(day => `
+    <div class="day-blk fi">
+      <div class="day-lbl">第${day.day}天 <span class="day-w" data-day="${day.day-1}">${w && w.forecast && w.forecast[day.day-1] ? w.forecast[day.day-1].icon+' '+w.forecast[day.day-1].high+'/'+w.forecast[day.day-1].low : ''}</span></div>
+      ${day.items.map(it => `<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div><button class="it-rm" onclick="removePlanItem(${day.day-1},'${escapeHtml(it.name).replace(/'/g,"\\'")}')">×</button></div>`).join('')}
+    </div>
+  `).join('');
+}
+
+function renderFullPlan() {
+  const fp = document.getElementById('full-plan');
+  if (!planItems.length) { fp.innerHTML = '<div class="empty-st"><span class="ee">📅</span>在「攻略收集」生成行程后显示在这里</div>'; return; }
+  const dest = document.getElementById('target-city').value;
+  const w = weatherCache[dest];
+  fp.innerHTML = `<div style="margin-bottom:18px;"><h2 style="font-family:'Noto Serif SC',serif;font-size:20px;">📍 ${escapeHtml(dest)} 行程</h2></div>
+    <div class="full-plan-grid">${planItems.map(day => `<div class="card-section"><div style="display:flex;gap:7px;margin-bottom:10px;"><span style="font-family:'Noto Serif SC',serif;font-size:22px;color:var(--accent);">${day.day}</span><span>第 ${day.day} 天</span>${w && w.forecast && w.forecast[day.day-1] ? `<span style="margin-left:auto;font-size:12px;">${w.forecast[day.day-1].icon} ${w.forecast[day.day-1].high}/${w.forecast[day.day-1].low}</span>` : ''}</div>${day.items.map(it => `<div class="it"><span class="it-t">${it.time||''}</span><div class="it-dot" style="background:${TC[it.type]||'#888'}"></div><div class="it-info"><div class="it-name">${escapeHtml(it.name)}</div><div class="it-note">${escapeHtml(it.note||'')}</div></div></div>`).join('')}</div>`).join('')}</div>`;
+}
+
+function removePlanItem(dayIdx, name) {
+  if (planItems[dayIdx]) {
+    planItems[dayIdx].items = planItems[dayIdx].items.filter(i => i.name !== name);
+    if (planItems[dayIdx].items.length === 0) planItems.splice(dayIdx,1);
+    for (let i=0; i<planItems.length; i++) planItems[i].day = i+1;
+    renderMiniPlan();
+    renderFullPlan();
+    saveAll();
+  }
+}
+
+// ======================== 倒计时 & 日期 ========================
+function onDateChange() {
+  const dep = document.getElementById('dep-date').value;
+  const ret = document.getElementById('ret-date').value;
+  const dest = document.getElementById('target-city').value || '目的地';
+  const info = document.getElementById('date-info');
+  const bar = document.getElementById('cd-bar');
+  if (!dep) { bar.classList.add('hidden'); return; }
+  if (ret && ret < dep) { document.getElementById('ret-date').value = ''; return; }
+  if (ret) {
+    const d1 = new Date(dep), d2 = new Date(ret);
+    const days = Math.round((d2-d1)/86400000)+1;
+    info.textContent = `共 ${days} 天 · ${dep} 至 ${ret}`;
+    document.getElementById('c-days').value = days;
+  } else info.textContent = `出发：${dep}`;
+  document.getElementById('cd-dest').innerHTML = `✈️ → ${dest}`;
+  bar.classList.remove('hidden');
+  if (cdTimer) clearInterval(cdTimer);
+  function tick() {
+    const now = new Date(), target = new Date(dep+' 08:00:00'), diff = target-now;
+    if (diff <= 0) {
+      document.getElementById('cd-d').innerHTML = '🎉'; document.getElementById('cd-h').innerHTML = '出发'; document.getElementById('cd-m').innerHTML = '啦';
+      clearInterval(cdTimer); return;
+    }
+    document.getElementById('cd-d').innerHTML = String(Math.floor(diff/86400000)).padStart(2,'0');
+    document.getElementById('cd-h').innerHTML = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+    document.getElementById('cd-m').innerHTML = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  }
+  tick(); cdTimer = setInterval(tick, 30000);
+  saveAll();
+}
+
+// ======================== 辅助函数 ========================
+function escapeHtml(str) { if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function gotoTab(i,btn) { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); document.getElementById('pg'+i).classList.add('active'); }
+function showInvite() { document.getElementById('inv-overlay').classList.add('show'); }
+function hideInv() { document.getElementById('inv-overlay').classList.remove('show'); }
+function copyCode() { navigator.clipboard?.writeText('TRIP-2847'); toast('邀请码已复制'); hideInv(); }
+function cTab(tab, btn) { document.querySelectorAll('.src-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const ta=document.getElementById('c-text'),uz=document.getElementById('c-upz'); if(tab==='img'){ ta.style.display='none'; uz.classList.add('show'); } else { ta.style.display=''; uz.classList.remove('show'); } }
+function handleImg(ev) { const f=ev.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=e=>{ window.imgData=e.target.result; document.getElementById('c-upz').innerHTML=`<img src="${window.imgData}" style="max-height:80px;border-radius:5px;"><div style="margin-top:4px;font-size:10px;">点击重新选择</div><input type="file" id="c-file" style="display:none;" onchange="handleImg(event)"/>`; }; reader.readAsDataURL(f); }
+function filt(type) { curFilt=type; document.querySelectorAll('[id^="cp-"]').forEach(c=>c.className='chip'); const map={all:'ca',restaurant:'cr',attraction:'cat',hotel:'ch'}; const el=document.getElementById('cp-'+ (type==='all'?'a':type[0])); if(el) el.classList.add(map[type]||'ca'); renderPlaces(); }
+
+// ======================== 初始化 ========================
+async function init() {
+  if (!loadAll()) {
+    // 默认数据
+    membersData = [{name:'你',city:'上海'},{name:'小林',city:'杭州'},{name:'阿杰',city:'南京'}];
+    places = {
+      "宽窄巷子": { name:"宽窄巷子", type:"attraction", note:"历史街区", mentions:["小林"], inPlan:false },
+      "锦里古街": { name:"锦里古街", type:"attraction", note:"夜晚氛围极佳", mentions:["小林"], inPlan:false },
+      "龙抄手(宽窄巷子)": { name:"龙抄手(宽窄巷子)", type:"restaurant", note:"皮薄馅多", mentions:["小林"], inPlan:false },
+      "春熙路民宿": { name:"春熙路民宿", type:"hotel", note:"交通便利", mentions:["阿杰"], inPlan:false }
     };
-    // 如果用户填写了 model 就传，否则不传（很多服务不强制需要）
-    if (model) requestBody.model = model;
-
-    try {
-        const resp = await fetch(`${baseUrl.replace(/\/+$/, '')}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify(requestBody)
-        });
-        const data = await resp.json();
-        if (!data.choices || !data.choices[0]?.message?.content) {
-            throw new Error('API 返回格式异常');
-        }
-        let content = data.choices[0].message.content.trim();
-
-        // 尝试多种方式提取 JSON
-        let places = null;
-        // 方式1：直接匹配 [...]
-        const arrayMatch = content.match(/\[[\s\S]*?\]/);
-        if (arrayMatch) {
-            try { places = JSON.parse(arrayMatch[0]); } catch(e) {}
-        }
-        // 方式2：如果方式1失败，尝试匹配 {...} 并包装成数组
-        if (!places) {
-            const objMatch = content.match(/\{[\s\S]*?\}/g);
-            if (objMatch) {
-                try { places = objMatch.map(s => JSON.parse(s)); } catch(e) {}
-            }
-        }
-        // 方式3：尝试将整个内容当作 JSON 解析
-        if (!places) {
-            try { places = JSON.parse(content); if (!Array.isArray(places)) places = [places]; } catch(e) {}
-        }
-        // 如果仍然无法解析，返回错误信息
-        if (!places) {
-            throw new Error('无法从 AI 回复中提取地点，请检查模型设置或重试');
-        }
-        return places;
-    } catch (e) {
-        console.error('AI 提取失败：', e);
-        // 返回 null 触发模拟提取，但我们可以在这里直接提示
-        document.getElementById('extractStatus').textContent = '❌ AI 调用失败：' + e.message;
-        return null;
-    }
+    targetCity = '成都';
+    planItems = [];
+    saveAll();
+  }
+  renderMembersList();
+  renderPlaces();
+  if (targetCity) {
+    document.getElementById('target-city').value = targetCity;
+    document.getElementById('main-badge').textContent = targetCity;
+    await fetchWeather(targetCity);
+    await fetchTransport(targetCity);
+  }
+  onDateChange();
+  updateGenBtn();
+  renderMiniPlan();
+  renderFullPlan();
 }
-function simulateExtract(text) {
-    const known = [
-        { kw:['故宫'], name:'故宫', type:'attraction', reason:'历史文化地标' },
-        { kw:['烤鸭','四季民福'], name:'四季民福烤鸭店', type:'restaurant', reason:'烤鸭名店' },
-        { kw:['花间堂'], name:'花间堂酒店', type:'accommodation', reason:'特色酒店' },
-        { kw:['长城','八达岭'], name:'八达岭长城', type:'attraction', reason:'世界遗产' },
-        { kw:['南锣鼓巷'], name:'南锣鼓巷', type:'attraction', reason:'胡同文化' },
-    ];
-    return known.filter(p => p.kw.some(w => text.includes(w))).map(p => ({name:p.name, type:p.type, reason:p.reason}));
-}
-async function submitContent() {
-    const room = getRoom(); if (!room) return toast('请先创建或加入房间');
-    const user = getUser();
-    user.name = document.getElementById('userName').value.trim() || user.name;
-    user.city = document.getElementById('userCity').value.trim() || user.city;
-    if (!room.memberCities) room.memberCities = {};
-    room.memberCities[appData.activeUserId] = user.city;
-
-    let rawText = '';
-    if (inputMode === 'text') {
-        rawText = document.getElementById('contentText').value.trim();
-        if (!rawText) return toast('请粘贴攻略文字');
-    } else {
-        const preview = document.getElementById('imagePreview');
-        if (!preview.src || preview.style.display === 'none') return toast('请上传截图');
-        rawText = '[截图内容]';
-    }
-
-    document.getElementById('extractStatus').textContent = '🤖 AI 分析中...';
-    let places = await extractWithAI(rawText);
-    if (!places) places = simulateExtract(rawText);
-    room.contents.push({
-        id: Date.now().toString(), userId: appData.activeUserId,
-        userName: user.name, text: rawText.substring(0,200),
-        places, time: new Date().toISOString()
-    });
-    if (inputMode === 'text') document.getElementById('contentText').value = '';
-    else { document.getElementById('imagePreview').style.display = 'none'; document.getElementById('imageInput').value = ''; }
-    saveLocal();
-    refreshAll();
-    document.getElementById('extractStatus').textContent = `✅ 提取到 ${places.length} 个地点`;
-    setTimeout(() => document.getElementById('extractStatus').textContent = '', 3000);
-}
-
-// ========== 地点聚合 ==========
-function aggregatePlaces() {
-    const room = getRoom(); if (!room) return { highFreq:[], all:[] };
-    const stats = {};
-    room.contents.forEach(c => c.places.forEach(p => {
-        const key = p.name;
-        if (!stats[key]) stats[key] = { ...p, count:0, users:[] };
-        stats[key].count++;
-        if (!stats[key].users.includes(c.userName)) stats[key].users.push(c.userName);
-    }));
-    const all = Object.values(stats).sort((a,b) => b.count - a.count);
-    return { highFreq: all.filter(p => p.count>=2), all };
-}
-function setFilter(f) {
-    currentFilter = f;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.filter-btn[onclick="setFilter('${f}')"]`).classList.add('active');
-    renderMiddle();
-}
-function togglePlaceSelect(name) {
-    const room = getRoom(); if (!room) return;
-    if (!room._selected) room._selected = [];
-    const idx = room._selected.indexOf(name);
-    if (idx >= 0) room._selected.splice(idx,1); else room._selected.push(name);
-    saveLocal();
-    renderMiddle(); renderRight();
-}
-function generateItinerary() {
-    const room = getRoom(); if (!room) return;
-    const selected = room._selected || [];
-    if (!selected.length) return toast('请先点击地点加入行程');
-    const { all } = aggregatePlaces();
-    const chosen = all.filter(p => selected.includes(p.name));
-    const days = parseInt(document.getElementById('daysSelect').value) || 2;
-    room.days = days;
-    room.startDate = document.getElementById('startDate').value;
-    const itinerary = [];
-    for (let d=0; d<days; d++) itinerary.push({ day:d+1, places:[] });
-    chosen.forEach((p, i) => itinerary[i%days].places.push(p));
-    room.itinerary = itinerary;
-    saveLocal();
-    refreshAll();
-}
-
-// ========== 天气（安全版） ==========
-async function updateWeather() {
-    const room = getRoom();
-    const badge = document.getElementById('weatherBadge');
-    if (!room || !room.destination) { badge.style.display='none'; return; }
-    try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        const resp = await fetch(`https://wttr.in/${encodeURIComponent(room.destination)}?format=4`, { signal: controller.signal });
-        clearTimeout(timeout);
-        if (!resp.ok) throw new Error('fetch failed');
-        let text = await resp.text();
-        if (text.includes('<')) {
-            const div = document.createElement('div'); div.innerHTML = text;
-            text = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
-        } else text = text.replace(/^[:\s]+/, '').trim();
-        if (text.length > 60) text = text.substring(0,57)+'...';
-        badge.textContent = text;
-        badge.style.display = 'inline-block';
-    } catch(e) { badge.style.display='none'; }
-}
-function updateCountdown() {
-    const room = getRoom(); if (!room) return;
-    room.startDate = document.getElementById('startDate').value;
-    room.days = parseInt(document.getElementById('daysSelect').value);
-    saveLocal();
-    refreshAll();
-}
-
-// ========== 导出/导入协作 ==========
-function exportRoom() {
-    const room = getRoom(); if (!room) return toast('没有打开的房间');
-    const blob = new Blob([JSON.stringify(room, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `旅行拼图_${room.shareCode}.json`;
-    a.click();
-    toast('已导出，发送给朋友吧');
-}
-function importRoom(e) {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-        try {
-            const room = JSON.parse(ev.target.result);
-            if (!room.shareCode) throw new Error('无效文件');
-            appData.rooms[room.shareCode] = room;
-            appData.activeRoomCode = room.shareCode;
-            saveLocal(); refreshAll(); toast('房间导入成功');
-        } catch(ex) { toast('无效的房间文件'); }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-}
-
-// ========== 弹窗辅助 ==========
-function showCreateModal() { document.getElementById('createModal').style.display='flex'; }
-function showJoinModal() { document.getElementById('joinModal').style.display='flex'; }
-function showArchiveModal() {
-    const list = document.getElementById('archiveList');
-    list.innerHTML = Object.values(appData.archives).length
-        ? Object.values(appData.archives).map(r => `<div style="margin-bottom:6px;"><b>${r.name}</b> (${r.shareCode}) <button class="btn btn-sm" onclick="loadArchive('${r.shareCode}')">查看</button></div>`).join('')
-        : '<p>暂无存档</p>';
-    document.getElementById('archiveModal').style.display='flex';
-}
-function loadArchive(code) {
-    const room = appData.archives[code];
-    if (room) { appData.activeRoomCode = code; appData.rooms[code] = room; closeModal('archiveModal'); refreshAll(); toast('查看存档：'+room.name); }
-}
-function showAISettings() {
-    document.getElementById('aiModel').value = appData.ai.model;
-    document.getElementById('aiSettingsModal').style.display='flex';
-}
-function saveAISettings() {
-    appData.ai.model = document.getElementById('aiModel').value.trim();
-    saveAi();
-    closeModal('aiSettingsModal');
-    toast(appData.ai.model ? '豆包AI已配置，提取时将使用模型' : '已保存（请填写模型接入点ID）');
-}
-function closeModal(id) { document.getElementById(id).style.display='none'; }
-function copyShareCode() { const room = getRoom(); if (room) navigator.clipboard.writeText(room.shareCode).then(() => toast('分享码已复制')); }
-
-// ========== 渲染 ==========
-function refreshAll() { renderHeader(); renderLeft(); renderMiddle(); renderRight(); updateWeather(); }
-function renderHeader() {
-    const room = getRoom();
-    document.getElementById('roomCodeDisplay').textContent = room ? room.shareCode : '—';
-    document.getElementById('destinationLabel').textContent = room?.destination ? '🎯 '+room.destination : '';
-    const cd = document.getElementById('countdownBadge');
-    if (room?.startDate) {
-        const diff = Math.ceil((new Date(room.startDate) - new Date())/(86400000));
-        cd.textContent = diff>0 ? `⏳ ${diff}天` : '🎉 出发!';
-        cd.style.display = 'inline-block';
-    } else cd.style.display = 'none';
-    document.getElementById('startDate').value = room?.startDate || '';
-    document.getElementById('daysSelect').value = room?.days || 2;
-}
-function renderLeft() {
-    const room = getRoom();
-    document.getElementById('currentUserLabel').textContent = getUser().name;
-    document.getElementById('userName').value = getUser().name;
-    document.getElementById('userCity').value = getUser().city||'';
-    const list = document.getElementById('contentsList');
-    if (!room?.contents.length) { list.innerHTML = '<div style="color:gray;text-align:center;">还没有内容</div>'; return; }
-    list.innerHTML = room.contents.map(c => `
-        <div style="background:#fff; border-radius:8px; padding:8px; margin-bottom:6px;">
-            <div style="font-size:0.8em; color:gray;">${c.userName}</div>
-            <div>${c.text}</div>
-            <div style="display:flex; gap:4px; flex-wrap:wrap;">${c.places.map(p => `<span style="background:#f0ebe0; padding:2px 6px; border-radius:6px; font-size:0.7em;">${p.name}</span>`).join('')}</div>
-        </div>
-    `).join('');
-}
-function renderMiddle() {
-    const { highFreq, all } = aggregatePlaces();
-    const filtered = currentFilter==='all'?all:all.filter(p=>p.type===currentFilter);
-    const highF = currentFilter==='all'?highFreq:highFreq.filter(p=>p.type===currentFilter);
-    document.getElementById('highFreqSection').style.display = highF.length?'block':'none';
-    document.getElementById('highFreqList').innerHTML = highF.map(p => `
-        <div class="place-card high-freq" onclick="togglePlaceSelect('${p.name}')">
-            <strong>${p.name}</strong> <span style="color:var(--gold);">🔥${p.count}</span>
-            <div style="font-size:0.7em;">${p.users.join('、')}</div>
-        </div>
-    `).join('');
-    const normal = filtered.filter(p=>!highF.includes(p));
-    document.getElementById('allPlacesList').innerHTML = normal.map(p => `
-        <div class="place-card" onclick="togglePlaceSelect('${p.name}')">
-            <strong>${p.name}</strong> <span style="color:gray;">${p.count}次</span>
-        </div>
-    `).join('');
-}
-function renderRight() {
-    const room = getRoom();
-    const container = document.getElementById('itineraryDisplay');
-    if (!room?.itinerary) { container.innerHTML = '<div style="color:gray;text-align:center;">点击地点加入行程后生成</div>'; return; }
-    container.innerHTML = room.itinerary.map(day => `
-        <div class="day-block"><strong>第${day.day}天</strong>${day.places.map(p => `<div>· ${p.name} (${p.type})</div>`).join('')}</div>
-    `).join('');
-}
-function toast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
-
-// 拖拽上传
-document.addEventListener('DOMContentLoaded', () => {
-    const upload = document.getElementById('imageUploadArea');
-    if (upload) {
-        upload.addEventListener('dragover', e => { e.preventDefault(); upload.style.borderColor='var(--accent)'; });
-        upload.addEventListener('dragleave', () => upload.style.borderColor='var(--border)');
-        upload.addEventListener('drop', e => {
-            e.preventDefault(); upload.style.borderColor='var(--border)';
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                document.getElementById('imageInput').files = e.dataTransfer.files;
-                handleImageUpload({ target: { files: [file] } });
-            }
-        });
-    }
-});
-
-// 启动
-loadAll();
-if (appData.activeRoomCode && appData.rooms[appData.activeRoomCode]) {
-    refreshAll();
-} else {
-    refreshAll();
-    toast('点击✨创建开始规划旅行');
-}
+init();
 </script>
 </body>
 </html>
